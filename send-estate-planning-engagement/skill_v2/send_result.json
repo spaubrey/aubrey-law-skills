@@ -1,0 +1,50 @@
+{
+  "document_id": "44743b5c-a458-4c09-a32a-c2136a3a799e",
+  "status": "Created",
+  "document_name": "Engagement Agreement \u2014 Doe \u2014 2026-06-04",
+  "sign_urls": {},
+  "recipients": [
+    {
+      "email": "spaubrey@gmail.com",
+      "id": "client",
+      "message": null,
+      "name": "John Doe",
+      "passcode": null,
+      "send_email": false,
+      "send_email_delay": 0,
+      "status": "created",
+      "subject": null,
+      "signing_order": 1,
+      "signing_url": "https://www.signwell.com/docs/37832cf1f0/",
+      "bounced": null,
+      "bounced_details": null,
+      "passcode_delivery": {
+        "enabled": false,
+        "methods": null,
+        "expire_after_access": false
+      },
+      "attachment_requests": []
+    },
+    {
+      "email": "scott@aubreylegal.com",
+      "id": "spouse",
+      "message": null,
+      "name": "Jane Doe",
+      "passcode": null,
+      "send_email": false,
+      "send_email_delay": 0,
+      "status": "created",
+      "subject": null,
+      "signing_order": 2,
+      "signing_url": "https://www.signwell.com/docs/37ebc54261/",
+      "bounced": null,
+      "bounced_details": null,
+      "passcode_delivery": {
+        "enabled": false,
+        "methods": null,
+        "expire_after_access": false
+      },
+      "attachment_requests": []
+    }
+  ]
+}

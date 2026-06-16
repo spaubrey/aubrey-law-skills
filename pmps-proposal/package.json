@@ -1,0 +1,15 @@
+{
+  "name": "pmps-skill",
+  "version": "1.0.0",
+  "description": "",
+  "main": "_shared.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "docx": "^8.5.0"
+  }
+}

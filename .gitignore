@@ -1,0 +1,16 @@
+node_modules/
+**/node_modules/
+*_BACKUP_*/
+.DS_Store
+**/.DS_Store
+OUTPUTS/
+*.tmp
+*.zip
+**/skill_v2/zi62cqU5
+
+*.zip
+**/triage-context.md
+.env
+**/.env
+**/firm-context.md
+**/triage-context.md

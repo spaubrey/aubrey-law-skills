@@ -1,0 +1,23 @@
+{
+  "matter_type": "individual",
+  "matter_last": "Reyes",
+  "title": "Reyes Trust Structure",
+  "subtitle": "Maria L. Reyes Revocable Trust — Individual Plan",
+  "grantors": {
+    "grantor1": {
+      "name": "Maria",
+      "trust_label": "MLR Trust",
+      "phase1_note": "Fully revocable · Maria's assets"
+    }
+  },
+  "phase1_caption": "Maria keeps full control of the trust during her lifetime.",
+  "children": [
+    { "name": "Daniel" },
+    { "name": "Sofia" }
+  ],
+  "common_trust_age": 25,
+  "withdrawal_age": 35,
+  "show_merge_option": false,
+  "trustee_succession": ["Maria", "Daniel", "Sofia"],
+  "firm_footer": "Draft for discussion — Aubrey Law LLC · 1329 Highland Ave Suite 1, Needham MA · (781) 474-3450"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "will.executor_appointment",
+  "title": "Appointment of Personal Representative",
+  "document_type": "will",
+  "jurisdiction": "base",
+  "condition": null,
+  "required_fields": [
+    "fiduciaries.executor.primary.full_name"
+  ],
+  "review_status": "approved",
+  "version_date": "2026-05-21",
+  "text": "I nominate {{ fiduciaries.executor.primary.full_name | name }} to serve as personal representative of my estate."
+}

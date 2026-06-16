@@ -1,0 +1,15 @@
+{
+  "client_first_name": "John",
+  "client_last_name": "Doe",
+  "client_email": "spaubrey@gmail.com",
+  "couple": true,
+  "spouse_first_name": "Jane",
+  "spouse_last_name": "Doe",
+  "spouse_email": "scott@aubreylegal.com",
+  "plan_type": "trust",
+  "trust_type": "joint",
+  "includes_deed": true,
+  "legal_plan": true,
+  "plan_name": "MetLife",
+  "cst_addendum": true
+}

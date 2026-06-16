@@ -1,0 +1,11 @@
+{
+  "final_path": "/sessions/zen-cool-mayer/mnt/Signwell Engagement Agreements/Engagement Agreement - Doe - 2026-06-04.docx",
+  "file_name": "Engagement Agreement - Doe - 2026-06-04.docx",
+  "share_link_ok": false,
+  "share_url": null,
+  "document_name": "Engagement Agreement — Doe — 2026-06-04",
+  "recipients": [
+    {"id": "client", "name": "John Doe", "email": "spaubrey@gmail.com", "placeholder_name": "Client"},
+    {"id": "spouse", "name": "Jane Doe", "email": "scott@aubreylegal.com", "placeholder_name": "Spouse"}
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "matter_type": "joint",
+  "matter_last": "Olson",
+  "title": "Olson Family Trust Structure",
+  "subtitle": "Wayne A. Olson (WAO Trust) & Courtney M. Olson (CMO Trust) — Separate Mirrored Trusts",
+  "grantors": {
+    "grantor1": {
+      "name": "Wayne",
+      "trust_label": "WAO Trust",
+      "phase1_note": "Fully revocable · Wayne's assets"
+    },
+    "grantor2": {
+      "name": "Courtney",
+      "trust_label": "CMO Trust",
+      "phase1_note": "Fully revocable · Courtney's assets"
+    }
+  },
+  "phase1_caption": "Each spouse keeps full control over their own trust while both are living.",
+  "children": [
+    { "name": "Son 1" },
+    { "name": "Son 2" }
+  ],
+  "common_trust_age": 23,
+  "withdrawal_age": 30,
+  "show_merge_option": true,
+  "trustee_succession": ["survivor", "Sarah", "Charles", "Jeffrey"],
+  "firm_footer": "Draft for discussion — Aubrey Law LLC · 1329 Highland Ave Suite 1, Needham MA · (781) 474-3450"
+}

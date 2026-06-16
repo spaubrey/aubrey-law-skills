@@ -1,0 +1,14 @@
+{
+  "id": "execution.self_proving_affidavit",
+  "title": "Massachusetts Self-Proving Affidavit",
+  "document_type": "ancillary",
+  "jurisdiction": "MA",
+  "condition": "state_requires_self_proving_affidavit",
+  "required_fields": [
+    "client.full_name",
+    "client.county"
+  ],
+  "review_status": "approved",
+  "version_date": "2026-05-21",
+  "text": "COMMONWEALTH OF MASSACHUSETTS; COUNTY OF {{ client.county | name }}. Before me, the undersigned authority, personally appeared {{ client.full_name | name }} and the witnesses, for purposes of a self-proving affidavit. This starter clause requires Massachusetts attorney review before production use."
+}

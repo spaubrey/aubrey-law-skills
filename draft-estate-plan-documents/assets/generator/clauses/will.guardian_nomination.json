@@ -1,0 +1,13 @@
+{
+  "id": "will.guardian_nomination",
+  "title": "Nomination of Guardian",
+  "document_type": "will",
+  "jurisdiction": "base",
+  "condition": "requires_guardian_clause",
+  "required_fields": [
+    "guardians.primary.full_name"
+  ],
+  "review_status": "approved",
+  "version_date": "2026-05-21",
+  "text": "If a guardian is needed for any minor child of mine, I nominate {{ guardians.primary.full_name | name }} to serve as guardian."
+}
