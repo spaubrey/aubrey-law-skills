@@ -165,7 +165,7 @@ substitution appears to succeed but the placeholder remains in the file.
 **Always use the collapsed-run pattern:**
 
 ```python
-import shutil, re
+import shutil, re, zipfile, os
 from docx import Document
 
 def all_paragraphs(doc):
@@ -223,6 +223,56 @@ for para in all_paragraphs(doc):
     replace_in_para(para, substitutions)
 doc.save('/mnt/user-data/outputs/[output].docx')
 ```
+
+### ⚠️ Critical: ZIP-Direct Footer Patching (mandatory — run after every save)
+
+python-docx's section API does **not** reliably surface all footer XML
+files. Confirmed blind spots in this skill's templates:
+
+| Template | Footer file missed | Placeholder inside |
+|---|---|---|
+| `pourover-will.docx` | `footer1.xml` | `[CLIENT]` |
+| `parental-appointment-guardian.docx` | `footer2.xml` | `[CLIENT]`, `[SPOUSE]` |
+
+These footers are linked in `document.xml.rels` and render in Word, but
+python-docx returns empty paragraph lists for them. Any `[bracket]`
+placeholder in those footers survives the python-docx pass silently.
+
+**Always follow every `doc.save()` with a ZIP-direct footer patch:**
+
+```python
+def patch_footers_in_zip(docx_path, substitutions):
+    """
+    Open the saved .docx as a ZIP, read every footer*.xml file directly,
+    apply substitutions by plain string replacement on the raw XML text,
+    and rewrite the ZIP in-place. Catches placeholders that python-docx's
+    section API misses.
+    """
+    import zipfile, os, shutil, re
+
+    tmp_path = docx_path + ".tmp"
+    with zipfile.ZipFile(docx_path, 'r') as zin, \
+         zipfile.ZipFile(tmp_path, 'w', zipfile.ZIP_DEFLATED) as zout:
+        for item in zin.infolist():
+            data = zin.read(item.filename)
+            if re.match(r'word/footer\d+\.xml', item.filename):
+                text = data.decode('utf-8')
+                for old, new in substitutions.items():
+                    # Escape for XML context — plain text values only
+                    text = text.replace(old, new)
+                data = text.encode('utf-8')
+            zout.writestr(item, data)
+
+    os.replace(tmp_path, docx_path)
+
+# Call immediately after every doc.save():
+patch_footers_in_zip('/mnt/user-data/outputs/[output].docx', substitutions)
+```
+
+**Important:** The substitution values written into footer XML must be
+plain text — no raw XML tags. If a value contains `&`, `<`, or `>`,
+escape them (`&amp;`, `&lt;`, `&gt;`) before passing to this function.
+Client names, county names, trust names, and dates are all safe as-is.
 
 ### Pour-Over Will — Jinja2 tags
 
@@ -439,26 +489,33 @@ def all_paragraphs(doc):
 ### Check 1 — Footer Placeholder
 
 **What to check:** Every document has a footer that includes the client's
-full name. If the footer still contains a bracket placeholder
-(e.g., `[CLIENT FULL NAME]`, `[FULL NAME]`, `[NAME]`) the merge failed.
+full name. If the footer still contains a bracket placeholder the merge
+failed.
 
-**How to detect:**
+**Important:** Do NOT use python-docx's section API for this check —
+it silently misses footer XML files in several of these templates (see
+ZIP-Direct Footer Patching above). Always scan footer XML directly from
+the ZIP:
+
 ```python
-import re
-for section in doc.sections:
-    for ftr in [section.footer, section.first_page_footer, section.even_page_footer]:
-        if ftr:
-            for para in ftr.paragraphs:
-                if re.search(r'\[.+?\]', para.text):
-                    issues.append(f"FOOTER PLACEHOLDER not filled: '{para.text.strip()}'")
-            for tbl in ftr.tables:
-                for row in tbl.rows:
-                    for cell in row.cells:
-                        if re.search(r'\[.+?\]', cell.text):
-                            issues.append(f"FOOTER TABLE PLACEHOLDER not filled: '{cell.text.strip()}'")
+import zipfile, re
+
+def check_footer_placeholders(docx_path):
+    issues = []
+    with zipfile.ZipFile(docx_path) as z:
+        footer_files = [f for f in z.namelist()
+                        if re.match(r'word/footer\d+\.xml', f)]
+        for fname in sorted(footer_files):
+            xml = z.read(fname).decode('utf-8')
+            text = re.sub(r'<[^>]+>', '', xml)
+            hits = re.findall(r'\[[^\]]+\]', text)
+            for h in hits:
+                if '[REQUIRES COMPLETION]' not in h:
+                    issues.append(f"FOOTER PLACEHOLDER in {fname}: {h}")
+    return issues
 ```
 
-**Expected values by document:**
+**Expected footer content by document:**
 
 | Document | Expected footer content |
 |---|---|
@@ -469,8 +526,9 @@ for section in doc.sections:
 | Parental Appt of Guardian | `PARENTAL APPOINTMENT OF GUARDIAN BY [CLIENT FULL NAME] AND [SPOUSE FULL NAME] \| [page#]` |
 | Funding Instructions | Aubrey Law branded footer — firm name/address |
 
-**Fix:** Re-run the footer substitution using the collected client name
-values and re-save. Do not leave any `[bracket]` text in any footer.
+**Fix:** Re-run `patch_footers_in_zip()` with the correct substitution
+values. Do not attempt to fix footers via python-docx's section API —
+it will not reach the affected footer files.
 
 ---
 
