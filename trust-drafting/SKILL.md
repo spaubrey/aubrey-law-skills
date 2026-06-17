@@ -218,52 +218,228 @@ Draft in this sequence:
 
 ---
 
-## Step 4: Merge-Field Review (Mandatory — run after every document)
+## Step 4: Pre-Finalization Review (Mandatory — run after every document)
 
-Before saving any output file, run a completeness check on the generated
-document:
+Run the following checks on every output file before saving it as final.
+These four issues are consistently missed — treat each as a blocking
+error that must be fixed before the document is delivered.
 
-1. **Scan for unresolved placeholders.** Open the saved .docx and scan
-   all paragraphs and table cells for:
-   - Any remaining `[BRACKET TEXT]` that was not substituted
-   - Any `{{ }}` or `{# #}` Jinja tags not rendered
-   - Blank runs where a required value should appear
+Execute all checks via python-docx. Use the helper scaffold below as a
+starting point, then extend it with the document-specific checks that
+follow.
 
-   ```python
-   from docx import Document
-   doc = Document('/mnt/user-data/outputs/[output].docx')
-   issues = []
-   for para in doc.paragraphs:
-       if '[' in para.text and ']' in para.text:
-           issues.append(para.text.strip())
-       if '{{' in para.text or '{#' in para.text:
-           issues.append(para.text.strip())
-   for tbl in doc.tables:
-       for row in tbl.rows:
-           for cell in row.cells:
-               if '[' in cell.text and ']' in cell.text:
-                   issues.append(cell.text.strip())
-   print(issues)
-   ```
+```python
+import re
+from docx import Document
+from docx.oxml.ns import qn
 
-2. **Check capitalization compliance.** Verify in the document text:
-   - Trust name appears in ALL CAPS in every location
-   - Client/spouse full names are ALL CAPS in signature blocks, notary
-     blocks, headers, and footers
-   - Signing county is ALL CAPS in every notary block
+doc = Document('/mnt/user-data/outputs/[output].docx')
+issues = []
 
-3. **Resolve or flag.**
-   - If a value was collected but not applied: fix the substitution and
-     re-save.
-   - If a value is genuinely unknown (e.g., trust date TBD): replace
-     the placeholder with `[REQUIRES COMPLETION]` and add to flag list.
-   - If capitalization is wrong: uppercase the value and re-save.
+def all_paragraphs(doc):
+    """Yield every paragraph — body, headers, footers, tables."""
+    yield from doc.paragraphs
+    for section in doc.sections:
+        for hdr in [section.header, section.first_page_header, section.even_page_header]:
+            if hdr: yield from hdr.paragraphs
+        for ftr in [section.footer, section.first_page_footer, section.even_page_footer]:
+            if ftr: yield from ftr.paragraphs
+    for tbl in doc.tables:
+        for row in tbl.rows:
+            for cell in row.cells:
+                yield from cell.paragraphs
+```
 
-4. **Document the review.** Record what was checked and any flags.
-   Include in the Step 5 delivery summary.
+---
 
-Run this check for **each document individually** before moving to the
-next in the sequence.
+### Check 1 — Footer Placeholder
+
+**What to check:** Every document has a footer that includes the client's
+full name. If the footer still contains a bracket placeholder
+(e.g., `[CLIENT FULL NAME]`, `[FULL NAME]`, `[NAME]`) the merge failed.
+
+**How to detect:**
+```python
+import re
+for section in doc.sections:
+    for ftr in [section.footer, section.first_page_footer, section.even_page_footer]:
+        if ftr:
+            for para in ftr.paragraphs:
+                if re.search(r'\[.+?\]', para.text):
+                    issues.append(f"FOOTER PLACEHOLDER not filled: '{para.text.strip()}'")
+            for tbl in ftr.tables:
+                for row in tbl.rows:
+                    for cell in row.cells:
+                        if re.search(r'\[.+?\]', cell.text):
+                            issues.append(f"FOOTER TABLE PLACEHOLDER not filled: '{cell.text.strip()}'")
+```
+
+**Expected values by document:**
+
+| Document | Expected footer content |
+|---|---|
+| Revocable Trust | `[TRUST NAME] \| [page#]` — trust name in ALL CAPS |
+| Pour-Over Will | `LAST WILL AND TESTAMENT OF [CLIENT FULL NAME] \| [page#]` |
+| Assignment of PP | `ASSIGNMENT OF PERSONAL PROPERTY FOR [CLIENT FULL NAME] \| [page#]` |
+| Certificate of Trust | `CERTIFICATION OF TRUST \| [page#]` |
+| Funding Instructions | Aubrey Law branded footer — firm name/address |
+
+**Fix:** Re-run the footer substitution using the collected client name
+values and re-save. Do not leave any `[bracket]` text in any footer.
+
+---
+
+### Check 2 — Document / Execution Date
+
+**What to check:** Every document contains a date — on the cover page,
+in the opening recital, in the notary block(s), and in the signature
+block. Any unfilled date appears as a blank underscore line, `___`,
+`[DocDate]`, `[DATE]`, or `TBD`.
+
+**How to detect:**
+```python
+date_patterns = [
+    r'\[DocDate\]', r'\[DATE\]', r'\[date\]',
+    r'_{3,}',          # three or more underscores (blank date line)
+    r',\s*20___',      # ", 20___" — unfilled year line
+]
+for para in all_paragraphs(doc):
+    for pat in date_patterns:
+        if re.search(pat, para.text):
+            issues.append(f"DATE not filled ({pat}): '{para.text.strip()}'")
+```
+
+**Rule:**
+- If Scott provided a trust execution date: substitute it everywhere.
+  Format: `[Month] [Day], [Year]` (e.g., `June 17, 2026`).
+- If date is genuinely TBD: leave the blank signature line as-is in the
+  body (this is intentional for wet-signing), BUT replace `[DocDate]`
+  and `[DATE]` tags with `[REQUIRES COMPLETION]` so they surface in the
+  flag list.
+- Cover page date line (`_______, 20___`) is intentionally blank — do
+  NOT flag this one as an error. Flag only resolved placeholder tags.
+
+---
+
+### Check 3 — Signing County
+
+**What to check:** Every notary block contains `COUNTY OF [SIGNING COUNTY]`.
+This placeholder must be replaced with the actual county in ALL CAPS
+(e.g., `COUNTY OF MIDDLESEX`). Every document in the package has at
+least one notary block; joint trusts and joint pour-over wills have two
+or more.
+
+**How to detect:**
+```python
+county_patterns = [
+    r'\[SIGNING COUNTY\]', r'\[County\]', r'\[COUNTY\]',
+    r'COUNTY OF\s*$',      # "COUNTY OF" with nothing after it
+    r'COUNTY OF\s+\[',     # "COUNTY OF [anything]"
+]
+for para in all_paragraphs(doc):
+    for pat in county_patterns:
+        if re.search(pat, para.text, re.IGNORECASE):
+            issues.append(f"SIGNING COUNTY not filled ({pat}): '{para.text.strip()}'")
+```
+
+**Fix:** Replace with `COUNTY OF [SIGNING COUNTY VALUE].upper()`.
+Confirm the county appears in ALL CAPS in every notary block in the
+document — there may be more than one (joint trust: one per grantor;
+certificate of trust: one per trustee).
+
+---
+
+### Check 4 — Article Title on Separate Line
+
+**What to check:** Article headings must appear as two separate
+paragraphs — the article label on one line, the article title on the
+next. When these collapse onto a single line the document is malformed.
+
+**Correct format (two paragraphs):**
+```
+ARTICLE ONE
+TRUST PROPERTY
+```
+
+**Wrong format (one paragraph — flag this):**
+```
+ARTICLE ONE TRUST PROPERTY
+ARTICLE TWO: FAMILY INFORMATION
+```
+
+**How to detect:**
+```python
+article_pattern = re.compile(
+    r'^(ARTICLE\s+(ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|\d+))\s+\S+',
+    re.IGNORECASE
+)
+for i, para in enumerate(doc.paragraphs):
+    if article_pattern.match(para.text.strip()):
+        issues.append(
+            f"ARTICLE TITLE on same line as label (para {i}): '{para.text.strip()}'"
+        )
+```
+
+**Fix:** Split the paragraph at the article label boundary. The article
+label (`ARTICLE ONE`) must be its own paragraph with the heading style.
+The article title (`TRUST PROPERTY`) must be a separate paragraph
+immediately following, also with the heading style. Do not use a line
+break (`\n`) within a single paragraph — they must be distinct
+`<w:p>` elements in the XML.
+
+---
+
+### Check 5 — General Unresolved Placeholders
+
+Catch anything not covered by Checks 1–4:
+```python
+for para in all_paragraphs(doc):
+    if re.search(r'\[.+?\]', para.text):
+        # Skip intentional blanks: [REQUIRES COMPLETION] already flagged
+        if '[REQUIRES COMPLETION]' not in para.text:
+            issues.append(f"UNRESOLVED PLACEHOLDER: '{para.text.strip()}'")
+    if '{{' in para.text or '{#' in para.text:
+        issues.append(f"UNRENDERED TEMPLATE TAG: '{para.text.strip()}'")
+```
+
+---
+
+### Check 6 — Capitalization Compliance
+
+```python
+# Values from Step 1 — already normalized to .upper()
+trust_name_upper   = context['trust_name'].upper()
+client_name_upper  = context['client_full_name'].upper()
+county_upper       = context['signing_county'].upper()
+
+for para in all_paragraphs(doc):
+    t = para.text
+    # Trust name present but not uppercased
+    if trust_name_upper.lower() in t.lower() and trust_name_upper not in t:
+        issues.append(f"TRUST NAME not ALL CAPS: '{t.strip()}'")
+    # County present but not uppercased
+    if county_upper.lower() in t.lower() and county_upper not in t:
+        issues.append(f"SIGNING COUNTY not ALL CAPS: '{t.strip()}'")
+```
+
+---
+
+### Resolve and Report
+
+After running all checks:
+
+1. **Fix automatically** where the correct value is known (wrong case,
+   missed substitution in footer or notary block).
+2. **Flag as `[REQUIRES COMPLETION]`** where the value is genuinely
+   unknown (date TBD).
+3. **Flag as `[REQUIRES ATTORNEY REVIEW]`** where a structural issue
+   (article title, boilerplate alteration) needs human judgment.
+4. Re-save the corrected file.
+5. Re-run checks 1–4 on the corrected file to confirm all issues are
+   resolved before moving to the next document.
+
+Run this full check for **each document individually** before moving to
+the next in the drafting sequence. Do not batch-check at the end.
 
 ---
 
