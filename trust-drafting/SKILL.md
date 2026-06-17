@@ -51,6 +51,7 @@ Verify each file is present and readable before drafting begins.
 | Funding Instructions & Checklist | `Assets/funding-Instructions.docx` |
 | Assignment of Personal Property | `Assets/Assignment of PP.docx` |
 | Certificate of Trust | `Assets/Certificate of Trust.docx` |
+| Parental Appointment of Guardian | `Assets/parental-appointment-guardian.docx` |
 
 > The Trust Funding Plan has no fixed template — it is generated from
 > the client's financial summary spreadsheet using the guide in
@@ -66,6 +67,8 @@ matter is present and readable:
 
 1. Determine trust type from any available context (claude.md, prior
    conversation). If unknown, default to checking ALL templates.
+   Note: `parental-appointment-guardian.docx` is only required when
+   minor children are present — skip its pre-flight check if no minors.
 2. For each required template in the table above, run:
    ```bash
    python3 -c "from docx import Document; Document('Assets/[filename]'); print('OK')"
@@ -98,6 +101,11 @@ Minimum required fields:
 - Personal representative(s) / executor(s) for Pour-Over Will
 - Guardian(s) — required only if minor children exist
 - Children (names, DOB if minors)
+- If minor children exist:
+  - Primary guardian — full name, address, phone
+  - Co-guardian (if any) — full name
+  - Successor (alternate) guardian — full name, address, phone
+  - Co-successor guardian (if any) — full name
 - Signing county (for notary blocks)
 
 Ask no more than 8 questions in one pass. Collect remaining data in a
@@ -127,8 +135,8 @@ corresponding reference guide(s):
 
 | Trust Type | Templates Needed | Reference Guide(s) |
 |---|---|---|
-| Individual | `individual-revocable-trust.docx`, `pourover-will.docx`, `funding-Instructions.docx`, `Assignment of PP.docx`, `Certificate of Trust.docx` | `individual-trust-guide.md`, `pourover-will-guide.md`, `funding-instructions-guide.md`, `assignment-cert-guide.md` |
-| Joint | `joint-trust.docx`, `pourover-will.docx` (×2), `funding-Instructions.docx`, `Assignment of PP.docx` (×2), `Certificate of Trust.docx` | `joint-trust-guide.md`, `pourover-will-guide.md`, `funding-instructions-guide.md`, `assignment-cert-guide.md` |
+| Individual | `individual-revocable-trust.docx`, `pourover-will.docx`, `funding-Instructions.docx`, `Assignment of PP.docx`, `Certificate of Trust.docx`, `parental-appointment-guardian.docx` *(if minors)* | `individual-trust-guide.md`, `pourover-will-guide.md`, `funding-instructions-guide.md`, `assignment-cert-guide.md` |
+| Joint | `joint-trust.docx`, `pourover-will.docx` (×2), `funding-Instructions.docx`, `Assignment of PP.docx` (×2), `Certificate of Trust.docx`, `parental-appointment-guardian.docx` *(if minors)* | `joint-trust-guide.md`, `pourover-will-guide.md`, `funding-instructions-guide.md`, `assignment-cert-guide.md` |
 
 Load only the reference guide for the document currently being drafted.
 Release each reference before loading the next.
@@ -137,35 +145,168 @@ Release each reference before loading the next.
 
 ## Step 3: Generate Documents from Templates — Order of Operations
 
-Use **python-docx / docxtpl** to open each template and perform find-
-and-replace or Jinja2 rendering to produce the output file. Do NOT
-use docx-js. Do NOT create a new Document() object from scratch.
-
-The correct pattern for each document:
-
-```python
-# Option A — simple find-and-replace (for non-Jinja templates)
-from docx import Document
-import copy, shutil
-
-shutil.copy('Assets/[template].docx', '/mnt/user-data/outputs/[output].docx')
-doc = Document('/mnt/user-data/outputs/[output].docx')
-for para in doc.paragraphs:
-    for run in para.runs:
-        run.text = run.text.replace('[PLACEHOLDER]', value)
-doc.save('/mnt/user-data/outputs/[output].docx')
-
-# Option B — Jinja2/docxtpl rendering (for template tags {{ }})
-from docxtpl import DocxTemplate
-tpl = DocxTemplate('Assets/[template].docx')
-tpl.render(context)
-tpl.save('/mnt/user-data/outputs/[output].docx')
-```
+Use **python-docx** to open each template and perform find-and-replace.
+Do NOT use docx-js. Do NOT create a new `Document()` from scratch.
+Do NOT iterate run-by-run (see critical warning below).
 
 Install dependencies if needed:
 ```bash
-pip install python-docx docxtpl --quiet
+pip install python-docx --quiet --break-system-packages
 ```
+
+### ⚠️ Critical: Collapsed-Run Substitution (mandatory pattern)
+
+python-docx splits paragraph text across multiple `<w:r>` runs whenever
+font formatting changes mid-word (bold boundary, style change, etc.).
+Iterating run-by-run and calling `run.text.replace(...)` silently misses
+any placeholder whose characters are split across two runs — the
+substitution appears to succeed but the placeholder remains in the file.
+
+**Always use the collapsed-run pattern:**
+
+```python
+import shutil, re
+from docx import Document
+
+def all_paragraphs(doc):
+    """Yield every paragraph — body, tables, headers, footers."""
+    yield from doc.paragraphs
+    for tbl in doc.tables:
+        for row in tbl.rows:
+            for cell in row.cells:
+                yield from cell.paragraphs
+    for section in doc.sections:
+        for container in [section.header, section.footer,
+                          section.first_page_header, section.first_page_footer,
+                          section.even_page_header, section.even_page_footer]:
+            if container:
+                yield from container.paragraphs
+                for tbl in container.tables:
+                    for row in tbl.rows:
+                        for cell in row.cells:
+                            yield from cell.paragraphs
+
+def replace_in_para(para, substitutions):
+    """
+    Collapse all runs to full text, apply substitutions, rewrite into
+    the first run. Preserves the first run's formatting for replaced
+    content. Skips paragraphs with no runs or no changes needed.
+    """
+    if not para.runs:
+        return
+    full = "".join(r.text for r in para.runs)
+    original = full
+    for old, new in substitutions.items():
+        full = full.replace(old, new)
+    if full == original:
+        return  # nothing changed — preserve per-run formatting intact
+    para.runs[0].text = full
+    for run in para.runs[1:]:
+        run.text = ""
+
+# Usage for every document:
+substitutions = {
+    "[TRUST NAME]"        : trust_name,          # already uppercased
+    "[CLIENT FULL NAME]"  : client_name,          # already uppercased
+    "[SPOUSE FULL NAME]"  : spouse_name,          # already uppercased
+    "[DocDate]"           : doc_date,
+    "[SIGNING COUNTY]"    : signing_county,       # already uppercased
+    "[Notary Commission]" : "[REQUIRES COMPLETION]",
+    "[NotaryExpiration]"  : "[REQUIRES COMPLETION]",
+    "[Seal]"              : "",
+    # Add document-specific substitutions below
+}
+
+shutil.copy('Assets/[template].docx', '/mnt/user-data/outputs/[output].docx')
+doc = Document('/mnt/user-data/outputs/[output].docx')
+for para in all_paragraphs(doc):
+    replace_in_para(para, substitutions)
+doc.save('/mnt/user-data/outputs/[output].docx')
+```
+
+### Pour-Over Will — Jinja2 tags
+
+The pour-over will template uses `{{ field | filter }}` tags rather than
+`[BRACKET]` placeholders. Treat these as literal strings and substitute
+them with the collapsed-run pattern using the exact tag text as the key:
+
+```python
+will_substitutions = {
+    "{{ client.full_name | name }}"                        : client_name,
+    "{{ client.city }}"                                    : client_city,
+    "{{ client.county }}"                                  : client_county.upper(),
+    "{{ spouse.full_name | name }}"                        : spouse_name,
+    "{{ trust.name | name }}"                              : trust_name,
+    "{{ trust.date }}"                                     : doc_date,
+    "{{ fiduciaries.executor.primary.full_name | name }}"  : executor_primary,
+    "{{ fiduciaries.executor.successor.full_name | name }}" : executor_successor,
+    "{{ fiduciaries.executor.co_primary.full_name | name }}": "",   # omit if none
+    "{{ fiduciaries.executor.co_successor.full_name | name }}": "", # omit if none
+    "{{ guardians.primary.full_name | name }}"             : guardian_primary,   # "" if no minors
+    "{{ guardians.successor.full_name | name }}"           : guardian_successor, # "" if no minors
+    "{{ guardians.second_successor.full_name | name }}"    : "",
+    "{{ person.full_name | name }}"                        : "",
+    "{{ person.reason }}"                                  : "",
+    "{{ child.full_name | name }}"                         : "",
+    "[CLIENT]"                                             : client_name,
+}
+```
+
+### Joint Trust — Option Block Handling
+
+The joint trust template contains `[IF ...]` and `[OPTION ...]` control
+tags that select which trust structure variant to use. Resolve these
+before applying substitutions:
+
+**Step A — Remove OMIT paragraphs** (paragraphs whose text *starts with*
+one of these tags are deleted entirely):
+
+```python
+OMIT_TAGS = [
+    "[IF NO TAX PLANNING]",
+    "[OPTION ONLY SURVOR'S TRUST]",
+    "[OPTION -MARITAL QTIP]",
+    "[OPTION -COMMON TRUST]",
+    "[OPTION IF OUTRIGHT AND COMMON TRUST]",
+    "[OPTION IF RIGTH OF WITHDRAWAL OR CHILD PROTECTION]",
+    "[OPTION LIMITED POWER OF APPOINTMENT]",
+    "[OPTION – IF CLIENT HAS CHILD FROM PREVIOUS]",
+    "[OPTION – IF SPOUSE HAS CHILD FROM PREVIOUS]",
+    "[OPTION – MARITAL QTIP TRUST]",
+    "[IF MARITIAL QTIP=Marital Trust]",
+    "[IF ONLY SURVIVOR=Survivor's]",
+    "[IF COMMON TRUST]",
+    "[IF RIGHT OF WITHDRAWAL]",
+    "[OPTION IF OUTRIGHT]",
+]
+# For Disclaimer trust — add the above. Adjust list for other structures.
+
+for para in list(doc.paragraphs):
+    for tag in OMIT_TAGS:
+        if para.text.strip().startswith(tag):
+            para._element.getparent().remove(para._element)
+            break
+```
+
+**Step B — Strip KEEP tags** (remove the tag marker, keep the content):
+
+```python
+KEEP_TAGS = [
+    "[IF DISCLAIMER]",
+    "[OPTION – DISCLAIMER - ONLY SURVIVORS TRUST]",
+]
+# Add to substitutions dict with empty string value:
+for tag in KEEP_TAGS:
+    substitutions[tag] = ""
+```
+
+**Step C — [OPTIONAL] attorney-decision blocks**
+After generation the joint trust will still contain `[OPTIONAL]` blocks
+— Trust Protector, remarriage termination, cash bequests, homestead
+distribution, and others. These are **intentional attorney decision
+points**, not merge errors. Do not flag them as Check 5 errors. Surface
+them in the delivery summary as a separate list titled
+"Attorney decisions required before finalizing."
 
 Draft in this sequence:
 
@@ -215,6 +356,49 @@ Draft in this sequence:
 - One per matter regardless of trust type
 - Vary language for individual vs. joint and co-trustee vs. not
 - See `References/assignment-cert-guide.md`
+
+### 6. Parental Appointment of Guardian *(only if minor children exist)*
+- Template: `Assets/parental-appointment-guardian.docx`
+- Output: `YYYY-MM-DD_Parental-Appointment-of-Guardian_[CLIENT-LAST-NAME].docx`
+- **Condition:** Draft this document if and only if the client has one or
+  more minor children. If no minors, skip entirely — do not generate.
+- One document per matter (covers both spouses jointly; both sign)
+- Per M.G.L. c. 190B § 5-202
+
+**Placeholder map:**
+
+| Placeholder | Value |
+|---|---|
+| `[CLIENT FULL NAME]` | Client full name — ALL CAPS |
+| `[CLIENT]` | Client full name — ALL CAPS |
+| `[SPOUSE FULL NAME]` | Spouse full name — ALL CAPS |
+| `[SPOUSE]` | Spouse full name — ALL CAPS |
+| `[Address]` | Client address |
+| `[CHILD FULL NAME]` | Each child's full name; repeat block per child |
+| `[Child DOB]` | Each child's date of birth (Month Day, Year) |
+| `[GUARDIAN]` | Primary guardian full name — ALL CAPS |
+| `[CO GUARDIAN]` | Co-guardian full name — ALL CAPS (omit "and [CO GUARDIAN]" if none) |
+| `[Guardian Address]` | Primary guardian address |
+| `[Guardian Phone]` | Primary guardian phone |
+| `[ALT GUARDIAN]` | Successor guardian full name — ALL CAPS |
+| `[CO ALT GUARDIAN]` | Co-successor guardian full name — ALL CAPS (omit if none) |
+| `[Alt Guardian Phone]` | Successor guardian phone |
+| `[DocDate]` | Execution date (Month Day, Year) |
+| `[Ordinal_DocDate]` | Ordinal execution date (e.g., "17th day of June, 2026") |
+| `[SIGNING COUNTY]` | Signing county — ALL CAPS |
+| `[Seal]` | Leave blank (notary affixes physical seal) |
+| `[Notary Commission]` | `[REQUIRES COMPLETION]` |
+
+**Multiple children:** The template has a single child line. If more than
+one minor child, duplicate the `[CHILD FULL NAME] born on [Child DOB]`
+block once per child before substituting.
+
+**Co-guardian handling:** If no co-guardian is named, remove
+"and [CO GUARDIAN]" from both the primary and successor appointment
+paragraphs before substituting. Same for co-successor guardian.
+
+**Footer:** `PARENTAL APPOINTMENT OF GUARDIAN BY [CLIENT] AND [SPOUSE]`
+— substitute both names, ALL CAPS.
 
 ---
 
@@ -282,6 +466,7 @@ for section in doc.sections:
 | Pour-Over Will | `LAST WILL AND TESTAMENT OF [CLIENT FULL NAME] \| [page#]` |
 | Assignment of PP | `ASSIGNMENT OF PERSONAL PROPERTY FOR [CLIENT FULL NAME] \| [page#]` |
 | Certificate of Trust | `CERTIFICATION OF TRUST \| [page#]` |
+| Parental Appt of Guardian | `PARENTAL APPOINTMENT OF GUARDIAN BY [CLIENT FULL NAME] AND [SPOUSE FULL NAME] \| [page#]` |
 | Funding Instructions | Aubrey Law branded footer — firm name/address |
 
 **Fix:** Re-run the footer substitution using the collected client name
@@ -393,14 +578,28 @@ break (`\n`) within a single paragraph — they must be distinct
 
 Catch anything not covered by Checks 1–4:
 ```python
+# These are intentional attorney-decision markers — not merge errors.
+# Surface them separately in the delivery summary, not as check failures.
+ATTORNEY_DECISION_TAGS = [
+    '[OPTIONAL]', '[OPTIONAL —', '[OPTIONAL—',
+]
+
 for para in all_paragraphs(doc):
-    if re.search(r'\[.+?\]', para.text):
-        # Skip intentional blanks: [REQUIRES COMPLETION] already flagged
-        if '[REQUIRES COMPLETION]' not in para.text:
-            issues.append(f"UNRESOLVED PLACEHOLDER: '{para.text.strip()}'")
-    if '{{' in para.text or '{#' in para.text:
-        issues.append(f"UNRENDERED TEMPLATE TAG: '{para.text.strip()}'")
+    txt = para.text
+    if re.search(r'\[.+?\]', txt):
+        if '[REQUIRES COMPLETION]' in txt:
+            pass  # already handled
+        elif any(txt.strip().startswith(tag) or tag in txt
+                 for tag in ATTORNEY_DECISION_TAGS):
+            attorney_decisions.append(txt.strip()[:120])  # collect separately
+        else:
+            issues.append(f"UNRESOLVED PLACEHOLDER: '{txt.strip()[:100]}'")
+    if '{{' in txt or '{#' in txt:
+        issues.append(f"UNRENDERED TEMPLATE TAG: '{txt.strip()[:80]}'")
 ```
+
+Report `attorney_decisions` in Step 5 under a separate heading:
+**"Attorney decisions required before finalizing"** — not as errors.
 
 ---
 
@@ -447,14 +646,31 @@ the next in the drafting sequence. Do not batch-check at the end.
 
 All output files are saved to `/mnt/user-data/outputs/`.
 
-Announce each file as it completes. After all files are generated:
-- Confirm which documents were generated and which templates were used
-- Report merge-field review results (all clear, or list of
-  `[REQUIRES COMPLETION]` items with field names)
-- Confirm trust name, client names, and signing county are ALL CAPS
-- Note any rows suppressed in the funding checklist
-- Flag anything requiring attorney review
-- Add note: *"Draft documents — requires attorney review before execution."*
+Announce each file as it completes. After all files are generated,
+provide a structured delivery summary with three sections:
+
+**Section A — Files Generated**
+List each file, the template it was derived from, and its review result
+(✅ clean / ⚠️ flagged).
+
+**Section B — Items Requiring Completion**
+List all `[REQUIRES COMPLETION]` fields by document and field name.
+These must be filled before execution.
+
+**Section C — Attorney Decisions Required Before Finalizing**
+List all `[OPTIONAL]` blocks remaining in the trust document that require
+a keep-or-delete decision. These are not merge errors — they are
+intentional drafting options built into the template. Examples:
+- Trust Protector role (§3.10) — keep or delete?
+- Remarriage termination clause (§9.04) — keep or delete?
+- Homestead distribution on first death — keep or delete?
+- Surviving grantor's limited power of appointment — keep or delete?
+- Cash bequests, charitable gifts, option-to-purchase, pet trust sections
+
+Instruct Scott to review each, make the decision, and delete the
+`[OPTIONAL —...]` instruction note before the document is executed.
+
+Close with: *"Draft documents — requires attorney review before execution."*
 
 ---
 
