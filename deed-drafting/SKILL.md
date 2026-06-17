@@ -1,16 +1,15 @@
 ---
 name: deed-drafting
 description: >
-  Drafts the Massachusetts deed-transfer recording package — a Quitclaim Deed AND its companion
-  Trustee's Certificate (M.G.L. c. 184 § 35) — transferring real property to a trust, using an
-  uploaded deed (PDF or Word) as the source. Use this skill whenever Scott uploads a deed and
-  wants to produce a draft transfer deed or trustee's certificate — including phrases like
-  "draft a deed from the uploaded deed", "create a deed to transfer property to the trust",
-  "populate the deed template", "draft a quitclaim deed", "draft the trustee's certificate", or
-  any request involving an uploaded deed file and a transfer to a trust. Always use this skill
-  when a deed document is uploaded and Scott wants a new deed or recording package produced from
-  it, even if the request is casual like "make a deed from this" or "fill out the deed template
-  using this deed."
+  Drafts a Massachusetts Quitclaim Deed transferring real property to a trust, using an uploaded
+  deed (PDF or Word) as the source. Use this skill whenever Scott uploads a deed and wants to
+  produce a draft transfer deed — including phrases like "draft a deed from the uploaded deed",
+  "create a deed to transfer property to the trust", "populate the deed template", "draft a
+  quitclaim deed", "draft a realty trust deed", "transfer to a realty trust", or any request
+  involving an uploaded deed file and a transfer to a trust. Always use this skill when a deed
+  document is uploaded and Scott wants a new deed produced from it, even if the request is casual
+  like "make a deed from this" or "fill out the deed template using this deed." Also triggers when
+  Scott asks to draft a Realty Trust alongside or instead of a deed transfer.
 ---
 
 # Deed Drafting Skill — Aubrey Law
@@ -18,151 +17,171 @@ description: >
 ## Purpose
 
 This skill extracts property and party information from a client's current deed and uses it to
-populate two Aubrey Law templates that are recorded together at the registry:
+populate the Aubrey Law Quitclaim Deed template, producing a ready-to-review draft deed that
+transfers the property to a trust.
 
-1. **Quitclaim Deed** transferring the property to the trust
-2. **Trustee's Certificate** pursuant to M.G.L. c. 184 § 35, evidencing the trustees' authority
+This skill also optionally generates a **Massachusetts Realty Trust** (Declaration of Trust +
+Schedule of Beneficial Interests) as a companion to the deed. When a Realty Trust is created,
+the **Realty Trust is the Grantee on the deed** — not the underlying revocable living trust(s).
 
-Both documents are produced as a package — the deed references the certificate ("as evidenced by
-a Certificate of Trustees pursuant to M.G.L. c. 184, §35, recorded herewith"), and the registry
-will not record the deed without the certificate.
+Bundled templates:
+- `assets/Cowork Deed Template_v01.docx` — Quitclaim Deed
+- `assets/Realty_Trust_Template.docx` — Realty Trust Declaration + Schedule
+- `assets/Trustees Certificate Template.docx` — Trustee's Certificate (M.G.L. c. 184 § 35)
 
-The bundled template files are:
-- `assets/Cowork Deed Template_v01.docx` — the Quitclaim Deed
-- `assets/Trustees Certificate Template.docx` — the Trustee's Certificate
+Use these bundled files as the base for every document. Do not build from scratch.
 
-Use these bundled files as the base for every matter. Open and edit them directly — do not build
-either document from scratch. Each template's exact font, spacing, page layout, and signature-page
-structure must be preserved.
+A complete Realty Trust transfer bundle therefore has **three** documents:
+1. Quitclaim Deed (Step 2)
+2. Trustee's Certificate (Step 2b) — required for recording alongside the deed under M.G.L. c. 184 § 35
+3. Realty Trust Declaration + Schedule (Step 3)
+
+When a transfer is made directly to a living trust (no Realty Trust), the bundle is the deed
+and the Trustee's Certificate; the Realty Trust step is skipped.
 
 ---
 
-## Step 0 — Confirm Trust Details Before Starting
+## Step 0 — Confirm Details Before Starting
 
-Before extracting anything from the deed, ask Scott two questions (use AskUserQuestion tool):
+Before extracting anything from the deed, ask Scott the following (use AskUserQuestion tool):
 
-1. **What is the full name of the trust?** (This will be inserted in ALL CAPS — e.g., "TREACY REALTY TRUST")
+1. **What is the full name of the trust?** (e.g., "TREACY REALTY TRUST" — used in ALL CAPS)
 2. **Who are the trustees?** Confirm whether the grantors on the uploaded deed are themselves
-   the trustees of the new trust, or whether different people will serve as trustees.
+   the trustees, or whether different people will serve. In most cases they are the same people.
+3. **Should a Realty Trust be drafted in addition to the deed?** (Yes / No)
+   - If **Yes**: **Is this a joint trust or separate trusts (one per spouse)?**
+     - *Joint trust*: One joint revocable living trust holds **100%** of beneficial interest.
+     - *Separate trusts*: Client's trust holds **50%**, spouse's trust holds **50%**.
+   - If **Yes**: Confirm the **full names of both living trusts** (needed for the Schedule).
 
-In most cases the grantors and trustees will be the same people — the clients are transferring
-their property into their own trust. Confirm this assumption explicitly rather than guessing.
-
-Do not proceed to extraction or population until Scott has confirmed both answers.
+Do not proceed until Scott has confirmed all answers.
 
 ---
 
-## Template Structure (What's in the File)
+## Template Structure — Deed
 
-The template is a US Letter document (1-inch top/bottom, 0.75-inch left/right margins) in
-Garamond font. It has exactly this layout:
+See the deed template at `assets/Cowork Deed Template_v01.docx`.
+
+The template is US Letter (1-inch top/bottom, 0.75-inch left/right margins), Garamond font:
 
 **Page 1:**
-- Large top spacing, then centered bold: `QUITCLAIM DEED`
-- Grantor/grantee block (see Step 1 for how to populate)
-- A floating text box (anchored to the page) with: `PROPERTY ADDRESS: [ADDRESS]` — this is a
-  Relaw.ai auto-fill field, leave it **completely untouched**
+- Centered bold: `QUITCLAIM DEED`
+- Grantor/grantee block
+- Floating text box: `PROPERTY ADDRESS: [ADDRESS]` — **leave completely untouched** (Relaw.ai field)
 - `with Quitclaim Covenants,`
-- Then: `[Property Description]`
-- Metes-and-bounds rows (each indented, with tab stops): `[Directional Call 1]  [Bound Description 1]` through Call 6
+- `[Property Description]`
+- Metes-and-bounds rows: `[Directional Call 1]  [Bound Description 1]` through Call 6
 - `[DESCRIPTION 2]`
 - `Meaning and intending to convey the same premises of Grantors' deed recorded on [Recording Date of Current Deed], and filed in the [Registry of Deeds] in Book [Current Deed Book Number], Page [Current Deed Page].`
-- **Property Address paragraph** (added just before the page break):
-  `Property Address: [street address of the property]`
-- Centered: `[SIGNATURES ON NEXT PAGE]` with a page break
+- `Property Address: [street address]` (added just before the page break)
+- Centered: `[SIGNATURES ON NEXT PAGE]` + page break
 
 **Page 2 (Signature page):**
 - `Witness our hands and seals this _____ day of ________________.`
-- Signature table: two signature lines side by side — `[GRANTOR]` on the left, `[GRANTOR 2]` on the right (borderless table)
-- `COMMONWEALTH OF MASSACHUSETTS`
-- `COUNTY OF __________________________`
-- Notary acknowledgment paragraph referencing `[GRANTOR] and [GRANTOR 2]`
-- Notary signature line, `Notary Public`, `My Commission Expires:`
+- Signature table: `[GRANTOR]` (left) | `[GRANTOR 2]` (right) — borderless table
+- Notary block referencing both grantors
 
-> **Important:** The recording reference placeholder in the actual template XML reads
-> `[Recording Date of Current Deed]` — not "Deed". Use that exact text when doing find-replace.
+> **Important:** The recording reference placeholder in the template XML reads
+> `[Recording Date of Current Deed]` — use that exact text in find-replace.
+
+---
+
+## Template Structure — Realty Trust
+
+See the Realty Trust template at `assets/Realty_Trust_Template.docx`.
+
+The template has **two sections** in one file:
+
+### Section 1: Declaration of Trust
+
+Key placeholders:
+
+| Placeholder | What to Insert |
+|---|---|
+| `[REALTY TRUST]` | Realty Trust name in ALL CAPS (e.g., `TREACY REALTY TRUST`) |
+| `[CLIENT]` | First trustee's full legal name |
+| `[SPOUSE]` | Second trustee's full legal name |
+| `[Ordinal Execution Date]` | Blank fill-in line: `________________________` |
+| `[DocDate]` (in notary block) | Blank fill-in line: `________________________` |
+| `[RETRUSTEE]` | First trustee's full name (notary acknowledgment) |
+| `[COTRUSTEE]` | Second trustee's full name (notary acknowledgment) |
+| `[SIGNING COUNTY]` | Blank fill-in line: `________________________` |
+| Notary Commission | Blank fill-in line: `________________________` |
+
+### Section 2: Schedule of Beneficial Interests and Agreement
+
+Key placeholders:
+
+| Placeholder | What to Insert |
+|---|---|
+| `[REALTY TRUST]` | Realty Trust name in ALL CAPS |
+| `[DocDate]` (Schedule date) | Blank fill-in line: `________________________` |
+| `[DocDate]` (Declaration date reference) | Blank fill-in line: `________________________` |
+| Beneficiary row(s) | See ownership rules below |
+| `[CLIENT]` | First trustee's full name |
+| `[SPOUSE]` | Second trustee's full name |
+| `[Joint Trust/Client Trust]` | Living trust name(s) per ownership structure |
+| `[Spouse Trust]` | Spouse's living trust name (separate trusts only) |
+| `[Ordinal Execution Date]` | Blank fill-in line: `________________________` |
+| `[SINGING COUNTY]` (sic) | Blank fill-in line: `________________________` |
+| `DOCDATE` (notary block) | Blank fill-in line: `________________________` |
+| Notary Commission | Blank fill-in line: `________________________` |
 
 ---
 
 ## Step 1 — Extract Information from the Uploaded Deed
 
-Read the uploaded deed carefully and extract the following values:
+Read the uploaded deed and extract:
 
-| Placeholder in Template | What to Extract |
+| Template Placeholder | What to Extract |
 |---|---|
 | `[GRANTOR]` | First grantor's full legal name (ALL CAPS) |
-| `[GRANTOR 2]` | Second grantor's full legal name (ALL CAPS). If only one grantor, delete this placeholder **everywhere it appears** — in the body paragraph, in the signature table, and in the notary acknowledgment — and remove any orphaned "and" or punctuation. |
-| Trustees | Use the names confirmed in Step 0. In most cases these are the same as the grantors. Both trustees are named in the grantee clause (see Step 2). |
-| `[TRUST NAME]` | Use the name confirmed in Step 0, formatted in **ALL CAPS** everywhere it appears. |
-| Trust date | Replace `[DocDate]` with a blank fill-in line: `________________________` |
-| `[Property Description]` | Opening property description paragraph (e.g., "A certain parcel of land situated in…") |
-| `[Directional Call 1]`–`[Directional Call 6]` | Each metes-and-bounds directional call. Add rows in the same indented tab-stop format if more than 6. Delete unused rows. |
-| `[Bound Description 1]`–`[Bound Description 6]` | Corresponding bound for each directional call. |
-| `[DESCRIPTION 2]` | Second description paragraph (easements, appurtenances, etc.). Delete entire paragraph if none. |
-| `[Recording Date of Current Deed]` | Date the current deed was recorded at the registry *(this is the exact placeholder text in the template XML)* |
-| `[Registry of Deeds]` | Full registry name (e.g., "Norfolk County Registry of Deeds") |
-| `[Current Deed Book Number]` | Book number from the current deed's recording reference |
-| `[Current Deed Page]` | Page number from the current deed's recording reference |
-| `ADDRESS` in grantor block | Street address of the grantor(s) |
-| `ADDRESS` in grantee block | Mailing address of the trustee/grantee (usually same as property address) |
-| Property Address paragraph | Street address of the property (added as a plain paragraph just before `[SIGNATURES ON NEXT PAGE]`) |
+| `[GRANTOR 2]` | Second grantor's full legal name (ALL CAPS). If only one grantor, delete everywhere — body, signature table, notary block — and remove orphaned "and"/punctuation. |
+| Trustees | Confirmed in Step 0; usually same as grantors |
+| `[TRUST NAME]` | Confirmed in Step 0, ALL CAPS |
+| `[DocDate]` | Replace with blank fill-in line: `________________________` |
+| `[Property Description]` | Opening description paragraph |
+| `[Directional Call 1–6]` / `[Bound Description 1–6]` | Metes-and-bounds calls. Add rows if >6; delete unused rows. |
+| `[DESCRIPTION 2]` | Second description paragraph (easements, etc.). Delete if none. |
+| `[Recording Date of Current Deed]` | Date deed was recorded at registry |
+| `[Registry of Deeds]` | Full registry name |
+| `[Current Deed Book Number]` | Book number |
+| `[Current Deed Page]` | Page number |
+| `ADDRESS` (grantee block) | Grantee mailing address (usually same as property) |
+| Property Address paragraph | Street address (plain paragraph before `[SIGNATURES ON NEXT PAGE]`) |
 
-**Lot/plan deeds:** If the property uses a lot/plan description rather than metes and bounds,
-place the full description in `[Property Description]` and delete all `[Directional Call]` and
-`[Bound Description]` paragraphs entirely.
+**Lot/plan deeds:** Place full description in `[Property Description]`; delete all directional
+call and bound description rows.
 
-**Registered land (Land Court):** The "Meaning and intending" paragraph uses Document No. and
-Certificate of Title instead of Book/Page. Adapt the sentence accordingly.
-
-**CRITICAL — Description format must mirror the source deed exactly:**
-- Each boundary call goes in its own paragraph (not concatenated into one paragraph)
-- "PARCEL 1" / "PARCEL 2" labels appear as **bold** paragraph headers before each description
-- Lead-in sentence ("A certain parcel of land...bounded and described as follows:") is its own paragraph
-- Each directional call is its own paragraph: `NORTHEASTERLY: by [description], [measurement];`
-- Supporting paragraphs ("Said parcel is shown as...", "The above described land is subject to...", "For title, see...") each get their own paragraph
-- If original deed has a "Said premises are conveyed subject to..." paragraph, include it after the last parcel
-- [DocDate] in the grantee clause: replace with a blank line (`________________________`), NOT the literal text "[DocDate]"
-
-**Orphaned punctuation:** After any deletion, remove surrounding words (like "and") and
-punctuation (commas, semicolons) that would otherwise be left stranded.
+**Registered land:** Adapt "Meaning and intending" to reference Document No. and Certificate
+of Title instead of Book/Page.
 
 ---
 
-## Step 2 — Populate the Template
+## Step 2 — Populate the Deed Template
 
-Use the `docx` skill to:
-1. Copy the bundled template (`assets/Cowork Deed Template_v01.docx`) to a working location
-2. Unpack it, apply all find-replace substitutions to the XML, and repack
+Use the `docx` skill to unpack, find-replace, and repack `assets/Cowork Deed Template_v01.docx`.
 
-### Grantor/Grantee clause
+### Grantee Clause — No Realty Trust
 
-The populated clause should read:
-
-> **[GRANTOR] and [GRANTOR 2]**, of [grantor address] ("Grantors"), for full consideration of
+> **[GRANTOR] and [GRANTOR 2]**, ("Grantors"), for full consideration of
 > ONE DOLLAR ($1.00), grant to **[TRUSTEE] and [CO-TRUSTEE]**, Trustees of the
 > **[TRUST NAME ALL CAPS]** u/a dated ________________________, as evidenced by a Certificate
 > of Trustees pursuant to M.G.L. c. 184, §35, recorded herewith, having a mailing address at
 > [grantee address] ("Grantee"),
 
-- Trust name is always ALL CAPS (e.g., `TREACY REALTY TRUST`)
-- `[DocDate]` is replaced with a blank fill-in line: `________________________`
-- If the grantors are the trustees (most common case), the trustee names are the same as the
-  grantor names — just inserted into the trustee slots
+### Grantee Clause — With Realty Trust
 
-### Property Address paragraph
+When a Realty Trust is drafted, **the Realty Trust is the Grantee**. The living trust(s) do
+not appear on the deed — they appear only in the Schedule of Beneficial Interests.
 
-Add a new paragraph **after** the "Meaning and intending..." sentence and **before** the
-`[SIGNATURES ON NEXT PAGE]` centered line. Format it as plain body text:
+> **[GRANTOR] and [GRANTOR 2]**, ("Grantors"), for full consideration of
+> ONE DOLLAR ($1.00), grant to **[TRUSTEE] and [CO-TRUSTEE]**, Trustees of the
+> **[REALTY TRUST NAME ALL CAPS]** u/a dated ________________________, as evidenced by a
+> Certificate of Trustees pursuant to M.G.L. c. 184, §35, recorded herewith, having a mailing
+> address at [grantee address] ("Grantee"),
 
-> Property Address: [street address of the property]
-
-(Use the actual street address extracted from the deed.)
-
-Do **not** alter: the floating property-address text box, page margins, paragraph spacing, font
-(Garamond), or the signature-page layout. These must remain exactly as in the template.
-
-After substitution, verify that no `[BRACKETS]` remain anywhere in the document except for
-intentional blanks like the trust date fill-in line.
+After substitution, verify no `[BRACKETS]` remain except intentional blank fill-in lines.
 
 ---
 
@@ -171,6 +190,13 @@ intentional blanks like the trust date fill-in line.
 Open `assets/Trustees Certificate Template.docx` and apply the substitutions below. The
 certificate reuses the trust and trustee information already gathered in Step 0 and Step 1, so no
 new client data is required — only the values you've already confirmed.
+
+Use the `docx` skill to unpack, find-replace, and repack. The certificate has no placeholders
+in its footers, so only `word/document.xml` needs substitution.
+
+> **Which trust name to use:** If a Realty Trust is being created, the Trustee's Certificate is
+> for the **Realty Trust** (the grantee on the deed). If no Realty Trust is involved, the
+> certificate is for the underlying revocable living trust named as grantee.
 
 ### Header block
 
@@ -221,40 +247,116 @@ trustee is removed everywhere. Check each of these locations after substitution:
 - Page margins, fonts (Garamond), spacing, and the borderless signature table layout
 - Paragraph numbering and the parenthetical letters (a)–(g)
 - The `[SIGNATURE PAGE TO FOLLOW]` centered marker and the page break that follows it
+- The footers (no substitutions needed there)
 
 After substitution, verify that no `[BRACKETS]` remain anywhere in the document except for the
 intentional blank fill-in lines (trust date, signing date, county if unknown, notary commission).
 
 ---
 
-## Step 3 — Display a Confirmation Summary
+## Step 3 — Populate the Realty Trust Template (if requested)
 
-Before saving, show Scott **two** two-column tables — one for the **Quitclaim Deed** and one for
-the **Trustee's Certificate** — listing every placeholder and the value used (or "— blank fill-in
-line —"). Then ask:
+Use the `docx` skill to unpack, find-replace, and repack `assets/Realty_Trust_Template.docx`.
 
-> "Does everything look correct on both documents? Should I make any changes before saving?"
+> **Critical — replace `[REALTY TRUST]` in the footers too.** The Realty Trust template has
+> `[REALTY TRUST]` in two footer files in addition to the body:
+> - `word/footer1.xml` — `[REALTY TRUST] DECLARATION OF TRUST`
+> - `word/footer3.xml` — `[REALTY TRUST] SCHEDULE OF BENEFICIAL INTEREST AND AGREEMENT`
+>
+> When you run find-replace on `[REALTY TRUST]`, apply it to **`word/document.xml`,
+> `word/footer1.xml`, and `word/footer3.xml`** (every `.xml` file under `word/` that contains
+> the placeholder). After packing, unzip the resulting `.docx` and grep both footer files to
+> confirm the realty trust name appears there and no `[REALTY TRUST]` remains.
+> `word/footer2.xml` contains only the boilerplate "Practitioner's Action Steps…" page footer
+> and has no placeholders — leave it alone.
 
-**Always include these flags:**
-- ⚠️ **Trust date is a blank fill-in line** on both documents — Scott will add the trust agreement date before execution.
-- ⚠️ **Notary commission and signing date** on the Trustee's Certificate are blank fill-in lines — completed at signing.
-- ⚠️ If the signing county was unknown, flag that it is a blank fill-in line on the certificate.
+### Declaration of Trust — Substitutions
 
-**Do not save either file until Scott explicitly confirms.**
+Replace all placeholders per the table in the Template Structure section above. All dates
+become blank fill-in lines. County lines become blank fill-in lines.
+
+The opening clause should read (after substitution):
+
+> **[CLIENT FULL NAME] and [SPOUSE FULL NAME]**, (the "Trustee"), hereby declare that they
+> and their successors in trust will hold any and all property... [rest of boilerplate unchanged]
+
+### Schedule of Beneficial Interests — Ownership Table
+
+The template includes **two pre-built beneficiary table variants**. Delete the one that does
+not apply and populate the one that does:
+
+**Joint trust (100%)** — one row:
+
+| Beneficiary | | Interest |
+|---|---|---|
+| Trustees of the **[JOINT TRUST NAME ALL CAPS]** u/d/t dated ________________________, or any successor Trustees thereof | | 100% of any and all property held from time to time by the trustees of the [REALTY TRUST] |
+
+Delete the two-row (50%/50%) table variant entirely.
+
+**Separate trusts (50%/50%)** — two rows:
+
+| Beneficiary | | Interest |
+|---|---|---|
+| Trustees of the **[CLIENT TRUST NAME ALL CAPS]** u/d/t dated ________________________, or any successor Trustees thereof | | 50% of any and all property held from time to time by the trustees of the [REALTY TRUST] |
+| Trustees of the **[SPOUSE TRUST NAME ALL CAPS]** u/d/t dated ________________________, or any successor Trustees thereof | | 50% of any and all property held from time to time by the trustees of the [REALTY TRUST] |
+
+Delete the single-row (100%) table variant entirely.
+
+Living trust dates in the table are always blank fill-in lines (`________________________`).
+
+### Schedule — Signature Blocks
+
+The template has three signature table sections in the Schedule:
+
+1. **Beneficiaries** (first block) — `[CLIENT]` as Trustee of the joint/client trust | `[SPOUSE]` as Trustee of the joint/client trust
+2. **Beneficiaries** (second block) — `[CLIENT]` as Trustee of the spouse trust | `[SPOUSE]` as Trustee of the spouse trust
+3. **Trustees** — `[CLIENT]`, Trustee of `[REALTY TRUST]` | `[SPOUSE]`, Trustee of `[REALTY TRUST]`
+
+**Joint trust:** Populate blocks 1 and 3. Block 1 reads: `[CLIENT], Trustee of the [JOINT TRUST NAME]` | `[SPOUSE], Trustee of the [JOINT TRUST NAME]`. Delete block 2 (the separate spouse trust block) entirely.
+
+**Separate trusts:** Populate all three blocks. Block 1 uses the client trust name, block 2 uses the spouse trust name, block 3 uses the Realty Trust name.
+
+All signature lines are blank underscores. The "Not to be recorded" note stays as-is.
 
 ---
 
-## Step 4 — Save the Completed Recording Package
+## Step 4 — Display a Confirmation Summary
 
-After Scott confirms, save **both** populated documents to the local outputs folder for Scott to
-download:
+Before saving any files, show Scott a two-column summary table of every placeholder and value
+used (or "— blank fill-in line —"). Show a separate table for each document produced:
 
-**Deed filename:** `DRAFT - [Grantor Last Name] Deed [YYYY-MM-DD].docx`
-**Certificate filename:** `DRAFT - [Grantor Last Name] Trustees Certificate [YYYY-MM-DD].docx`
+- Deed (always)
+- Trustee's Certificate (always)
+- Realty Trust Declaration (if drafted)
+- Realty Trust Schedule (if drafted)
 
-- Use today's date for `[YYYY-MM-DD]`
-- If two grantors have different last names, use the first grantor's last name (use the same last
-  name on both files so they sort together)
-- The `DRAFT` prefix signals these require attorney review before use
-- Provide Scott with `computer://` links to **both** files in the final response, since they are
-  recorded together as a single package
+Then ask:
+
+> "Does everything look correct? Should I make any changes before saving?"
+
+**Always flag:**
+- ⚠️ **All trust/execution dates are blank fill-in lines** — to be completed before signing.
+- ⚠️ **County lines are blank fill-in lines** — confirm signing county before execution.
+- ⚠️ **Notary commission expiration is a blank fill-in line** — Scott completes at signing.
+- ⚠️ **"Not to be recorded" note on the Schedule** — confirm client understands the Schedule is kept private.
+- ⚠️ **Recording order at the registry:** Trustee's Certificate is recorded **alongside** the deed;
+  the Realty Trust Schedule is **not** recorded.
+
+Do not save any files until Scott explicitly confirms.
+
+---
+
+## Step 5 — Save the Completed Documents
+
+After confirmation, save to outputs using the format `YYYY-MM-DD_[Grantee]_[Document Title].docx`:
+
+| Document | Filename |
+|---|---|
+| Deed | `YYYY-MM-DD_[Grantee Last Name]_Quitclaim Deed.docx` |
+| Trustee's Certificate | `YYYY-MM-DD_[Grantee Last Name]_Trustees Certificate.docx` |
+| Realty Trust | `YYYY-MM-DD_[Grantee Last Name]_Realty Trust.docx` |
+
+- Use today's date for `YYYY-MM-DD` (e.g., `2025-06-17`)
+- **[Grantee]** is the trust or realty trust receiving the property (e.g., `TREACY REALTY TRUST` → `Treacy Realty Trust`; or the living trust name in title case)
+- For a direct-to-living-trust transfer, use the trust's short name (e.g., `Smith Family Trust`)
+- No `DRAFT` prefix — the `YYYY-MM-DD_Grantee_Title` format is self-identifying
