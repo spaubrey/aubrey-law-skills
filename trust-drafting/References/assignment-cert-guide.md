@@ -3,8 +3,8 @@
 Load this reference when drafting the Assignment of Personal Property
 or the Certificate of Trust.
 
-Source guide: `/mnt/project/assignment-ppm-cert-guide.md`
-Source templates: `/mnt/project/Assignment_of_PP.docx`, `/mnt/project/Certificate_of_Trust.docx`
+Source guide: `References/assignment-cert-guide.md`
+Source templates: `Assets/Assignment of PP.docx`, `Assets/Certificate of Trust.docx`
 
 ---
 

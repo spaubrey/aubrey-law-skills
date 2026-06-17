@@ -2,8 +2,8 @@
 
 Load this reference when drafting the Funding Instructions & Checklist.
 
-Source guide: `/mnt/project/funding-instructions-guide.md`
-Source template: `/mnt/project/funding-Instructions.docx`
+Source guide: `References/funding-instructions-guide.md`
+Source template: `Assets/funding-Instructions.docx`
 
 ---
 
@@ -47,7 +47,7 @@ All section headings: Garamond 12pt, navy `1B3A6B`, bold, bottom border navy.
 1. **Why Funding Your Trust Matters**
    — Standard boilerplate about retitling and beneficiary designations.
    — Callout box: "Important: Funding your Trust is your responsibility..."
-   — Read full text from `/mnt/project/funding-instructions-guide.md` Section 1.
+   — Read full text from `References/funding-instructions-guide.md` Section 1.
 
 2. **Before You Begin**
    — Correct titling format block (bold/italic) with `[TRUSTEE NAME(S)]`

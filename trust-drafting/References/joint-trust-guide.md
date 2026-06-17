@@ -2,7 +2,7 @@
 
 Load this reference when drafting a Revocable Trust for a married couple.
 
-Source template: `/mnt/project/joint-trust.docx`
+Source template: `Assets/joint-trust.docx`
 
 ---
 

@@ -2,7 +2,7 @@
 
 Load this reference when drafting the Pour-Over Will.
 
-Source template: `/mnt/project/pourover-will.docx`
+Source template: `Assets/pourover-will.docx`
 Template engine: Nunjucks/Jinja2-style `{{ }}` and `{% %}` blocks.
 
 ---

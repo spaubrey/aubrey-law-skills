@@ -2,7 +2,7 @@
 
 Load this reference when drafting the Revocable Trust for a single (individual) client.
 
-Source template: `/mnt/project/individual-revocable-trust.docx`
+Source template: `Assets/individual-revocable-trust.docx`
 
 ---
 
