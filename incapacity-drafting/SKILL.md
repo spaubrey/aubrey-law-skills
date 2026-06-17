@@ -57,7 +57,7 @@ reference against the .docx template if anything is ambiguous.
 | HCP Preferences Worksheet | `references/hcp-preferences-worksheet.md` | `references/HCP_Preferences_Worksheet.docx` |
 | HIPAA Authorization | `references/hipaa-articles.md` | `references/HIPAA_v1.1.docx` |
 | Advance Directive | `references/ahd-articles.md` | `references/Living_Will_v1.1.docx` |
-| Durable Power of Attorney | `references/dpoa-articles.md` | `references/DPOA_v1.1.docx` |
+| Durable Power of Attorney | `references/dpoa-articles.md` | `references/DPOA_v1.2.docx` |
 
 The legacy `dpoa-incapacity-guide.md`, if present in the installed skill
 folder, is superseded by `dpoa-articles.md`. Delete the legacy file once
@@ -76,7 +76,7 @@ in the skill's `references/` folder. The five required template files are:
 | `references/HCP_Preferences_Worksheet.docx` | HCP Preferences Worksheet |
 | `references/HIPAA_v1.1.docx` | HIPAA Authorization |
 | `references/Living_Will_v1.1.docx` | Advance Directive |
-| `references/DPOA_v1.1.docx` | Durable Power of Attorney |
+| `references/DPOA_v1.2.docx` | Durable Power of Attorney |
 
 **Check:** Run `ls <skill_path>/references/*.docx` or use the `view` tool on
 the references directory to confirm all five are present.
@@ -206,7 +206,7 @@ Key document defaults (see article guides for full detail):
 - **HCP Preferences Worksheet:** No witnesses, no notary; eleven topic tables.
 - **HIPAA:** Notary only (no witnesses); no spouse clause; no address field.
 - **AHD:** Two witnesses + notary; three triggering conditions; two notary blocks.
-- **DPOA:** Single notary block; witnesses sign inline; six conditional macros must be resolved.
+- **DPOA:** Single notary block; witnesses sign inline; eight conditional macros must be resolved (`[IF_SOLO_AGENT]`, `[IF_CO_AGENT]`, `[IF_JOINT]`, `[IF_SEPARATE]`, `[IF_ONE_SUCCESSOR]`, `[IF_MULTI_SUCCESSOR]`, `[IF_MARRIED]`, `[IF_AIF_IS_MARRIED]`).
 
 **Cross-document rules that apply to ALL documents:**
 - **Names** (Principal and fiduciaries): **UPPERCASE plain text** — strip any bold from name runs.
@@ -239,7 +239,7 @@ Template-to-document mapping:
 | `references/HCP_Preferences_Worksheet.docx` | HCP Preferences Worksheet |
 | `references/HIPAA_v1.1.docx` | HIPAA Authorization |
 | `references/Living_Will_v1.1.docx` | Advance Directive |
-| `references/DPOA_v1.1.docx` | Durable Power of Attorney |
+| `references/DPOA_v1.2.docx` | Durable Power of Attorney |
 
 ### 4b — Unpack the working copy
 
@@ -325,10 +325,12 @@ notary page breaks, execution-date blanks, pronoun grammar).
 
 For DPOA specifically, the most common failure modes are:
 1. Leaving literal `[IF_*]` or `[END_IF_*]` macro tags in the output
-2. Leaving unresolved bracketed placeholders (`[CLIENT]`, `[SPOUSE]`, etc.)
-3. Forgetting to insert the successor name list after the successor opening
-   sentence
-4. Including `[IF_MARRIED]` content for single clients (especially the
+2. Leaving unresolved `[SUCCESSOR AGENT]` or other bracketed placeholders
+3. Emitting both `[IF_ONE_SUCCESSOR]` and `[IF_MULTI_SUCCESSOR]` blocks
+   instead of exactly one
+4. Including `[IF_CO_AGENT]` content (joint/separate paragraph, co-agent
+   appointment clause) for solo-agent matters
+5. Including `[IF_MARRIED]` content for single clients (especially the
    entire "Care in Proximity of Spouse" section, which must be omitted
    wholesale)
 

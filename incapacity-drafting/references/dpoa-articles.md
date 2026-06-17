@@ -1,5 +1,5 @@
 # Durable Power of Attorney — Section Drafting Guide
-# Source: Scott Aubrey / Aubrey Law actual template (DPOA_v1.1.docx)
+# Source: Scott Aubrey / Aubrey Law actual template (DPOA_v1.2.docx)
 # Authority: M.G.L. c. 190B § 5-501; M.G.L. c. 190B Article V-A (digital assets)
 
 ---
@@ -38,14 +38,20 @@ on the matter configuration.
 | `[IF_CO_AGENT]` | `dpoa.co_agent` is set | Opt-in |
 | `[IF_JOINT]` | `dpoa.coagent_authority == "joint"` (requires both signatures) | — |
 | `[IF_SEPARATE]` | `dpoa.coagent_authority == "separate"` (each may act alone) | **Scott's default when co-agents are named** |
+| `[IF_ONE_SUCCESSOR]` | exactly one successor agent named (`dpoa.successors` has 1 entry) | — |
+| `[IF_MULTI_SUCCESSOR]` | two or more successor agents named (`dpoa.successors` has 2+ entries) | — |
 | `[IF_MARRIED]` | `matter.is_married == true` (client has a spouse named in the matter) | — |
 | `[IF_AIF_IS_MARRIED]` | `dpoa.initial_agent.is_married == true` (the Attorney-in-Fact has a spouse) | — |
 
 **Pairing rules:**
 - `[IF_SOLO_AGENT]` and `[IF_CO_AGENT]` are mutually exclusive. Pick exactly one.
 - `[IF_JOINT]` and `[IF_SEPARATE]` are mutually exclusive and only apply when
-  `[IF_CO_AGENT]` is emitted. Skip both joint and separate blocks for solo
-  agents.
+  `[IF_CO_AGENT]` is emitted. In the template they are nested inside
+  `[IF_CO_AGENT]...[END_IF_CO_AGENT]`. Skip both for solo agents.
+- `[IF_ONE_SUCCESSOR]` and `[IF_MULTI_SUCCESSOR]` are mutually exclusive.
+  Pick based on the count of `dpoa.successors[]`: exactly 1 → ONE_SUCCESSOR;
+  2 or more → MULTI_SUCCESSOR. If no successors are named, omit both blocks
+  and flag in DRAFTING NOTES.
 - `[IF_MARRIED]` and `[IF_AIF_IS_MARRIED]` are independent — both, either, or
   neither may be true.
 
@@ -108,60 +114,71 @@ Centered, bold, all caps (TR_Title style).
 
 ## APPOINTMENT OPENING
 
-**Solo agent variant (`[IF_SOLO_AGENT]` block):**
+Single paragraph — co-agent presence controlled inline with `[IF_CO_AGENT]...[END_IF_CO_AGENT]`:
+
 ```
-I, [CLIENT] of [City], Massachusetts hereby appoint [INITIAL POA] to serve
-as my Agent and Attorney-in-Fact (hereinafter referred to as
-"Attorney-in-Fact") for me and in my name and behalf to control and manage
-my property and affairs in all respects including full power and authority
-to act as provided herein.
+I, [CLIENT] of [City], Massachusetts hereby appoint [INITIAL POA]
+[IF_CO_AGENT]and [CO POA],[END_IF_CO_AGENT] to serve as my Agent and
+Attorney-in-Fact (hereinafter referred to as "Attorney-in-Fact") for me
+and in my name and behalf to control and manage my property and affairs
+in all respects including full power and authority to act as provided herein.
 ```
 
-**Co-agent variant (`[IF_CO_AGENT]` block):**
-```
-I, [CLIENT] of [City], Massachusetts hereby appoint [INITIAL POA] and
-[CO POA], to serve jointly as my Agents and Attorneys-in-Fact (hereinafter
-referred to collectively as "Attorney-in-Fact") for me and in my name and
-behalf to control and manage my property and affairs in all respects
-including full power and authority to act as provided herein.
-```
-
-Note: even though the co-agent paragraph says "serve jointly", the actual
-joint vs. separate authority is set later via `[IF_JOINT]` / `[IF_SEPARATE]`.
+When `[IF_CO_AGENT]` is emitted, the "and [CO POA]," phrase is included and
+"Attorney-in-Fact" remains singular (the document uses it collectively).
+When omitted (solo agent), the clause reads straight through without the
+co-agent insertion. The actual joint vs. separate authority is controlled
+separately in the next section via `[IF_JOINT]` / `[IF_SEPARATE]`.
 
 ---
 
 ## SUCCESSOR APPOINTMENT
 
-**Solo agent variant:**
+One paragraph containing two mutually exclusive conditional blocks —
+`[IF_ONE_SUCCESSOR]` for a single named successor, `[IF_MULTI_SUCCESSOR]`
+for two or more. Emit exactly one; omit the other.
+
+**Single successor variant (`[IF_ONE_SUCCESSOR]`):**
 ```
 If [INITIAL POA] becomes incapacitated, is not qualified to serve, or
-declines or otherwise fails to serve, then I appoint the following to serve
-as my successor Attorney-in-Fact for me and in my name and behalf to
-control and manage my property and affairs in all respects including full
-power and authority, in the order named:
+declines or otherwise fails to serve, then I appoint
+[IF_ONE_SUCCESSOR][SUCCESSOR AGENT] to serve as my successor
+Attorney-in-Fact for me and in my name and behalf to control and manage
+my property and affairs in all respects including full power and
+authority.[END_IF_ONE_SUCCESSOR]
+```
 
-    1.  [FIRST SUCCESSOR]
-    2.  [SECOND SUCCESSOR]
+**Multiple successors variant (`[IF_MULTI_SUCCESSOR]`):**
+```
+If [INITIAL POA] becomes incapacitated, is not qualified to serve, or
+declines or otherwise fails to serve, then I appoint
+[IF_MULTI_SUCCESSOR]the following to serve as my successor
+Attorney-in-Fact for me and in my name and behalf to control and manage
+my property and affairs in all respects including full power and
+authority, in the order named:
+
+    FIRST:  [SUCCESSOR AGENT]
+    SECOND: [SUCCESSOR AGENT]
     ...
+[END_IF_MULTI_SUCCESSOR]
 ```
 
-**Co-agent variant:**
-```
-If [INITIAL POA] and [CO POA] both become incapacitated, are not qualified
-to serve, or decline or otherwise fail to serve, then I appoint the
-following to serve as my successor Attorney-in-Fact for me and in my name
-and behalf to control and manage my property and affairs in all respects
-including full power and authority, in the order named:
+The "FIRST:", "SECOND:", etc. ordinal labels are inserted as a numbered
+list in indented `TRBody1` paragraphs. Use actual ordinal words (FIRST,
+SECOND, THIRD) not numbers. The `[SUCCESSOR AGENT]` placeholder is
+replaced with the actual name for each entry from `dpoa.successors[]`.
 
-    1.  [FIRST SUCCESSOR]
-    2.  [SECOND SUCCESSOR]
-    ...
-```
+**Co-agent successor opening:** When `[IF_CO_AGENT]` is in effect, the
+opening sentence becomes "If [INITIAL POA] and [CO POA] both become
+incapacitated..." — substitute accordingly at generation time.
+
+If no successors are named in the design sheet, omit both blocks and add
+a DRAFTING NOTE: "No successor Attorney-in-Fact named — confirm with Scott."
+Do not generate a successor block with empty placeholder names.
 
 ---
 
-## CO-AGENT AUTHORITY (only if `[IF_CO_AGENT]`)
+## CO-AGENT AUTHORITY (nested inside `[IF_CO_AGENT]...[END_IF_CO_AGENT]`)
 
 **Joint authority (`[IF_JOINT]` — both must sign):**
 ```
@@ -215,7 +232,7 @@ attorney and the powers herein granted.
 ## ENUMERATED POWERS (sentence-case bold lead-ins)
 
 Emit in order. Each is a single `TR_Art2` paragraph with a bold lead-in label
-followed by the body text. Read `DPOA_v1.1.docx` for the verbatim wording of
+followed by the body text. Read `DPOA_v1.2.docx` for the verbatim wording of
 each — the template is the ground truth.
 
 1. **Powers of Collection and Payment.** Collect, receive, demand, sue for,
@@ -335,7 +352,7 @@ each — the template is the ground truth.
 
 ## STRUCTURAL SECTIONS (ALL CAPS bold lead-ins)
 
-Continue as `TR_Art2` paragraphs. Read `DPOA_v1.1.docx` for verbatim wording.
+Continue as `TR_Art2` paragraphs. Read `DPOA_v1.2.docx` for verbatim wording.
 
 26. **HEALTH CARE DECISIONS AND FUNERAL PLANS.** Authorize admission to
     health care facilities; enter care agreements; release medical records
@@ -480,13 +497,20 @@ For unscheduled signings, `[DocDate]` resolves to ` ____________ ` and
       signature footer — no bold on the name value itself
 - [ ] `[IF_SOLO_AGENT]` vs `[IF_CO_AGENT]` correctly emitted; the OTHER variant
       omitted (NOT left in the body as a comment or stub)
+- [ ] Co-agent appointment: `[IF_CO_AGENT]and [CO POA],[END_IF_CO_AGENT]` emitted
+      or omitted correctly in the opening appointment paragraph
+- [ ] `[IF_ONE_SUCCESSOR]` vs `[IF_MULTI_SUCCESSOR]` correctly emitted based on
+      successor count; exactly one block present; the other omitted entirely
+- [ ] Successor names resolved — no literal `[SUCCESSOR AGENT]` placeholder
+      remains; each successor name is the actual person's name
+- [ ] Multiple successors use ordinal labels: FIRST, SECOND, THIRD (not numbers)
 - [ ] No literal `[IF_*]` or `[END_IF_*]` macro tags remain in the output
 - [ ] No literal placeholder brackets remain (`[CLIENT]`, `[SPOUSE]`, etc.) —
       all resolved or, if intentionally left blank for signing, replaced
       with underscored blanks
-- [ ] `[IF_JOINT]` vs `[IF_SEPARATE]` correctly emitted for co-agent matters;
-      both omitted for solo agents (default to SEPARATE if ambiguous per
-      Scott's instruction)
+- [ ] `[IF_JOINT]` vs `[IF_SEPARATE]` correctly emitted for co-agent matters
+      (nested inside `[IF_CO_AGENT]`); both omitted for solo agents (default
+      to SEPARATE if ambiguous per Scott's instruction)
 - [ ] `[IF_MARRIED]` blocks correctly included for married clients, OMITTED
       for single clients (including the entire "Care in Proximity of
       Spouse" section)
