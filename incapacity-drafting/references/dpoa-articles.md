@@ -114,21 +114,39 @@ Centered, bold, all caps (TR_Title style).
 
 ## APPOINTMENT OPENING
 
-Single paragraph — co-agent presence controlled inline with `[IF_CO_AGENT]...[END_IF_CO_AGENT]`:
+Single paragraph with two mutually exclusive inline blocks — `[IF_CO_AGENT]`
+for two agents, `[IF_SOLO_AGENT]` for one. Emit exactly one; omit the other.
 
+**Template text:**
 ```
 I, [CLIENT] of [City], Massachusetts hereby appoint [INITIAL POA]
-[IF_CO_AGENT]and [CO POA],[END_IF_CO_AGENT] to serve as my Agent and
-Attorney-in-Fact (hereinafter referred to as "Attorney-in-Fact") for me
-and in my name and behalf to control and manage my property and affairs
-in all respects including full power and authority to act as provided herein.
+[IF_CO_AGENT]and [CO POA], to serve as my Agents and Attorneys-in-Fact
+(hereinafter referred to collectively as "Attorney-in-Fact")[END_IF_CO_AGENT]
+[IF_SOLO_AGENT]to serve as my Agent and Attorney-in-Fact
+(hereinafter referred to as "Attorney-in-Fact")[END_IF_SOLO_AGENT]
+for me and in my name and behalf to control and manage my property and
+affairs in all respects including full power and authority to act as
+provided herein.
 ```
 
-When `[IF_CO_AGENT]` is emitted, the "and [CO POA]," phrase is included and
-"Attorney-in-Fact" remains singular (the document uses it collectively).
-When omitted (solo agent), the clause reads straight through without the
-co-agent insertion. The actual joint vs. separate authority is controlled
-separately in the next section via `[IF_JOINT]` / `[IF_SEPARATE]`.
+**Rendered output — Solo agent:**
+```
+I, JANE SMITH of Newton, Massachusetts hereby appoint JOHN SMITH
+to serve as my Agent and Attorney-in-Fact (hereinafter referred to as
+"Attorney-in-Fact") for me and in my name and behalf...
+```
+
+**Rendered output — Co-agents (joint or separate):**
+```
+I, JANE SMITH of Newton, Massachusetts hereby appoint JOHN SMITH
+and MARY JONES, to serve as my Agents and Attorneys-in-Fact (hereinafter
+referred to collectively as "Attorney-in-Fact") for me and in my name
+and behalf...
+```
+
+Note: "Agents and Attorneys-in-Fact" (plural) is used for co-agents
+regardless of whether they act jointly or separately — that distinction is
+set by the dedicated paragraph below. Do not add "jointly" here.
 
 ---
 
@@ -178,9 +196,21 @@ Do not generate a successor block with empty placeholder names.
 
 ---
 
-## CO-AGENT AUTHORITY (nested inside `[IF_CO_AGENT]...[END_IF_CO_AGENT]`)
+## CO-AGENT AUTHORITY
 
-**Joint authority (`[IF_JOINT]` — both must sign):**
+Two standalone paragraphs — one for joint, one for separate. Each is its own
+`<w:p>` element in the XML. **Delete the entire `<w:p>` element** for the
+unused variant — do not leave an empty paragraph behind.
+
+**Resolution rules:**
+
+| Scenario | Joint `<w:p>` | Separate `<w:p>` |
+|---|---|---|
+| Solo agent | **Delete entire `<w:p>`** | **Delete entire `<w:p>`** |
+| Co-agent + joint | Keep, strip macro tags | **Delete entire `<w:p>`** |
+| Co-agent + separate | **Delete entire `<w:p>`** | Keep, strip macro tags |
+
+**Joint authority paragraph** (`[IF_CO_AGENT][IF_JOINT]...[END_IF_JOINT][END_IF_CO_AGENT]`):
 ```
 If there is more than one Attorney-in-Fact serving at any time, the
 Attorneys-in-Fact shall act jointly, and any exercise of authority under
@@ -192,7 +222,8 @@ resignation, cessation, or inability of such Attorney-in-Fact's
 predecessor(s) to serve as attorney-in-fact hereunder.
 ```
 
-**Separate authority (`[IF_SEPARATE]` — each may act alone — Scott's default):**
+**Separate authority paragraph** (`[IF_CO_AGENT][IF_SEPARATE]...[END_IF_SEPARATE][END_IF_CO_AGENT]`)
+— Scott's default when co-agents are named:
 ```
 If there is more than one Attorney-in-Fact serving at any time, each
 Attorney-in-Fact may act separately and independently, and any third party
@@ -488,17 +519,36 @@ For unscheduled signings, `[DocDate]` resolves to ` ____________ ` and
 
 ## QUALITY CHECKLIST (DPOA-specific)
 
+**Run the three-item pre-delivery scan from SKILL.md Step 5a–5c first:**
+- [ ] **Footer** — `footer1.xml` reads `DURABLE POWER OF ATTORNEY OF [CLIENT NAME IN CAPS]`
+      with `[CLIENT]` resolved. Note: `[CLIENT]` is split across three runs in the
+      footer XML — inspect `footer1.xml` directly, do not rely on body scan.
+- [ ] **Execution date** — `[Ordinal_DocDate]` in execution block and `[DocDate]` in notary block
+      both resolved or replaced with correct underscore blanks; no literal bracket tags remain.
+- [ ] **Signing county** — `[SIGNING COUNTY]` in notary block resolved to UPPERCASE county name
+      (e.g., "NORFOLK"); no literal bracket tag remains.
+
+**Then run the full checklist:**
 - [ ] Title verbatim: DURABLE POWER OF ATTORNEY OF [CLIENT name in UPPERCASE]
 - [ ] **Title is bold; body paragraph text following each section lead-in is
       NOT bold** — lead-in labels (e.g., `Banking Powers.`,
       `THIRD PARTY RELIANCE.`) are bold; the prose that follows is plain text
-- [ ] **`[SIGNING COUNTY]` value is UPPERCASE** (e.g., "NORFOLK", "MIDDLESEX")
 - [ ] **`[CLIENT]` name is UPPERCASE plain text** throughout body and
       signature footer — no bold on the name value itself
 - [ ] `[IF_SOLO_AGENT]` vs `[IF_CO_AGENT]` correctly emitted; the OTHER variant
       omitted (NOT left in the body as a comment or stub)
-- [ ] Co-agent appointment: `[IF_CO_AGENT]and [CO POA],[END_IF_CO_AGENT]` emitted
-      or omitted correctly in the opening appointment paragraph
+- [ ] **Appointment paragraph renders correctly for the matter type:**
+      - Solo agent → reads "appoint [NAME] to serve as my Agent and Attorney-in-Fact"
+      - Co-agent → reads "appoint [NAME] and [NAME], to serve as my Agents and
+        Attorneys-in-Fact (hereinafter referred to collectively as 'Attorney-in-Fact')"
+      - No `[IF_CO_AGENT]`, `[END_IF_CO_AGENT]`, `[IF_SOLO_AGENT]`, or
+        `[END_IF_SOLO_AGENT]` tags remain in the output
+- [ ] **Joint/separate paragraphs correctly resolved — no blank paragraphs left behind:**
+      - Solo agent → both joint `<w:p>` and separate `<w:p>` deleted entirely
+      - Co-agent + joint → joint paragraph kept (tags stripped); separate `<w:p>` deleted entirely
+      - Co-agent + separate → separate paragraph kept (tags stripped); joint `<w:p>` deleted entirely
+      - Confirm by checking that no empty `<w:p>` with `TRBody1` style sits between
+        the successor section and the GENERAL GRANT OF POWER paragraph
 - [ ] `[IF_ONE_SUCCESSOR]` vs `[IF_MULTI_SUCCESSOR]` correctly emitted based on
       successor count; exactly one block present; the other omitted entirely
 - [ ] Successor names resolved — no literal `[SUCCESSOR AGENT]` placeholder

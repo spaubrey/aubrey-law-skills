@@ -255,10 +255,21 @@ Use the `view` tool on `unpacked/word/document.xml`. Identify the exact XML
 representation of each placeholder — they may be split across multiple
 `<w:r>` runs. Do not guess at the XML structure; always inspect first.
 
-For DPOA: locate the full XML span of each `[IF_X — ...]...[END_IF_X]`
-conditional block. Remove unwanted blocks entirely from the XML; strip only
-the macro tag text from blocks that are kept. Never leave literal macro tags
-in the output.
+For DPOA conditional blocks, there are two structural patterns — handle them differently:
+
+**Inline blocks** — condition sits inside a larger paragraph alongside other text.
+If true: strip the `[IF_X]`/`[END_IF_X]` tags, keep content. If false: remove
+content and tags, leave surrounding paragraph intact.
+→ Examples: `[IF_CO_AGENT]` and `[IF_SOLO_AGENT]` in the appointment paragraph.
+
+**Full-paragraph blocks** — entire `<w:p>` element contains only the conditional.
+If true: strip macro tags, keep the `<w:p>`. If false: **delete the entire
+`<w:p>` element** — leaving it empty produces a blank line in the document.
+→ Examples: the joint authority `<w:p>` and the separate authority `<w:p>`.
+For solo-agent matters, delete both. For co-agent matters, delete whichever
+of joint/separate does not apply.
+
+Never leave literal macro tags in the output.
 
 ### 4d — Substitute placeholders using str_replace
 
@@ -296,32 +307,99 @@ five documents for the Client before starting the Spouse's set.
 
 ---
 
-## Step 5 — Quality Review (Always)
+## Step 5 — Pre-Delivery Scan (Run This Before Anything Else in QA)
 
-Before delivering, run the full checklist in
+**Three items are consistently missed. Check these first, on every document,
+before running the broader quality checklist.**
+
+### 5a — Footer Placeholder
+
+Three documents carry a `[CLIENT]` placeholder in the page footer:
+DPOA, HCP, and AHD. The footer is a **separate XML file** (`word/footer1.xml`)
+and is NOT checked when you scan `word/document.xml`. It is easy to miss.
+
+**How to check:** After generating each document, unpack it and inspect
+`word/footer1.xml` directly. Confirm that the footer text reads:
+
+| Document | Expected footer text |
+|---|---|
+| DPOA | `DURABLE POWER OF ATTORNEY OF [CLIENT NAME IN CAPS]` |
+| HCP | `MASSACHUSETTS HEALTH CARE PROXY OF [CLIENT NAME IN CAPS]` |
+| AHD | `ADVANCE DIRECTIVE OF [CLIENT NAME IN CAPS]` |
+| HIPAA | `AUTHORIZATION FOR RELEASE OF PROTECTED HEALTH INFORMATION` (static — no placeholder) |
+| Worksheet | No footer |
+
+**Split-run warning:** In the template XML, `[CLIENT]` in the footer is
+split across three separate `<w:r>` runs: one run contains `[`, one contains
+`CLIENT`, one contains `]`. When substituting, you must replace the
+combined text across those runs — not look for the literal string `[CLIENT]`
+in a single run. Inspect the raw XML before substituting to locate the
+exact run boundaries.
+
+---
+
+### 5b — Execution / Document Date
+
+Every document except the Worksheet has a date placeholder that must be
+either populated or converted to a blank underline. These are consistently
+left as literal bracket tags.
+
+| Document | Placeholder(s) | Location |
+|---|---|---|
+| DPOA | `[Ordinal_DocDate]` (e.g., "21st day of May, 2025") | Execution block |
+| DPOA | `[DocDate]` (e.g., "May 21, 2025") | Notary block |
+| HCP | `[DocDate]` | Both notary blocks (principal + witness) |
+| HIPAA | `[DocDate]` | Dated line + notary block |
+| AHD | `[DocDate]` | Both notary blocks (principal + witness) |
+
+**Rule:** If signing date is known → substitute it. If unscheduled →
+replace with the correct blank form:
+- `[Ordinal_DocDate]` → `_____ day of _____________, _______`
+- `[DocDate]` → `____________`
+
+A literal `[DocDate]` or `[Ordinal_DocDate]` remaining in output is a defect.
+
+---
+
+### 5c — Signing County
+
+`[SIGNING COUNTY]` appears in the notary block(s) of DPOA, HCP, HIPAA,
+and AHD. It must be substituted with the county name in **UPPERCASE**.
+
+| Document | Occurrences |
+|---|---|
+| DPOA | 1 (principal notary block) |
+| HCP | 2 (principal notary block + witness notary block) |
+| HIPAA | 1 (notary block) |
+| AHD | 2 (principal notary block + witness notary block) |
+
+**Rule:** Substitute with the client's county of residence, UPPERCASE,
+no "County" suffix — e.g., `NORFOLK`, `MIDDLESEX`, `SUFFOLK`.
+If the signing location differs from the client's home county, use the
+actual signing county (confirm with Scott). A literal `[SIGNING COUNTY]`
+remaining in output is a defect.
+
+---
+
+## Step 5 — Full Quality Review
+
+After the three-item pre-delivery scan passes, run the full checklist in
 `references/incapacity-quality-checklist.md` PLUS the document-specific
 checklists at the bottom of each article guide
 (`hcp-articles.md`, `hipaa-articles.md`, `ahd-articles.md`,
 `hcp-preferences-worksheet.md`, `dpoa-articles.md`). Verify file count and
 naming, client-data consistency, fiduciary chain, statutory citations,
 execution blocks, document-specific defaults, AND the cross-document
-formatting rules from `formatting-rules.md` (uppercase names, footer line,
-notary page breaks, execution-date blanks, pronoun grammar).
+formatting rules (uppercase names, footer line, notary page breaks,
+execution-date blanks, pronoun grammar).
 
-**Key formatting checks to run on every document:**
-1. **All names UPPERCASE** — CLIENT and all fiduciary names (HCP agents,
-   DPOA agents, HIPAA recipients) appear in UPPERCASE plain text. No bold
-   on name values.
-2. **SIGNING COUNTY UPPERCASE** — in all notary blocks across all five
-   documents.
-3. **HCP Relationship fields plain text** — `[Primary HCP Relationship]`
-   and `[Alternate 1 HCP Relationship]` values are NOT bold.
-4. **DPOA body text not bold** — section lead-in labels (`Banking Powers.`,
-   `THIRD PARTY RELIANCE.`, etc.) are bold; the prose that follows is plain.
-   The title is bold.
-5. **No unresolved placeholders** — scan every document for any remaining
-   `[BRACKET]` tags. Replace signing-day blanks with underscored blanks;
-   flag anything else in DRAFTING NOTES.
+**Additional formatting checks (run on every document):**
+1. **All names UPPERCASE** — CLIENT and all fiduciary names appear in
+   UPPERCASE plain text. No bold on name values.
+2. **HCP Relationship fields plain text** — not bold.
+3. **DPOA body prose not bold** — lead-in labels bold; following prose plain.
+4. **No unresolved placeholders anywhere** — scan both `document.xml` AND
+   `footer1.xml`. Any `[BRACKET]` tag in either file is a defect.
 
 For DPOA specifically, the most common failure modes are:
 1. Leaving literal `[IF_*]` or `[END_IF_*]` macro tags in the output
@@ -334,12 +412,8 @@ For DPOA specifically, the most common failure modes are:
    entire "Care in Proximity of Spouse" section, which must be omitted
    wholesale)
 
-These should be verified before every DPOA delivery.
-
 If any item fails, log it as a DRAFTING NOTE inside the affected document
 AND surface it in the Step 6 summary. Do NOT silently fix and ship.
-
----
 
 ## Step 6 — Deliver Summary
 

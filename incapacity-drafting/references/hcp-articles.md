@@ -397,6 +397,15 @@ content — no trailing preferences section.
 
 ## QUALITY CHECKLIST (HCP-specific)
 
+**Run the three-item pre-delivery scan from SKILL.md Step 5a–5c first:**
+- [ ] **Footer** — `footer1.xml` reads `MASSACHUSETTS HEALTH CARE PROXY OF [CLIENT NAME IN CAPS]`
+      with `[CLIENT]` resolved. Inspect `footer1.xml` directly — not covered by body scan.
+- [ ] **Document date** — `[DocDate]` resolved or replaced with `____________` in
+      BOTH notary blocks (principal + witness); no literal bracket tag remains.
+- [ ] **Signing county** — `[SIGNING COUNTY]` resolved to UPPERCASE county name in
+      BOTH notary blocks (principal + witness); no literal bracket tag remains.
+
+**Then run the full checklist:**
 - [ ] Title verbatim: MASSACHUSETTS HEALTH CARE PROXY OF [CLIENT in
       UPPERCASE]
 - [ ] No literal placeholder brackets remain (`[CLIENT]`,

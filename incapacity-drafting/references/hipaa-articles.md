@@ -364,6 +364,16 @@ inconsistency). In v2 this paragraph is its own properly-styled line.
 
 ## QUALITY CHECKLIST (HIPAA-specific)
 
+**Run the three-item pre-delivery scan from SKILL.md Step 5a–5c first:**
+- [ ] **Footer** — HIPAA footer is static text only (`AUTHORIZATION FOR RELEASE OF
+      PROTECTED HEALTH INFORMATION`); no `[CLIENT]` placeholder. Confirm footer
+      text is intact but no substitution needed.
+- [ ] **Document date** — `[DocDate]` resolved or replaced with `____________` in
+      the Dated line (P18) AND the notary block (P24); no literal bracket tag remains.
+- [ ] **Signing county** — `[SIGNING COUNTY]` resolved to UPPERCASE county name in
+      the notary block; no literal bracket tag remains.
+
+**Then run the full checklist:**
 - [ ] Title verbatim: AUTHORIZATION FOR RELEASE OF PROTECTED HEALTH
       INFORMATION
 - [ ] No literal placeholder brackets remain (`[CLIENT]`, `[Client DOB]`,
