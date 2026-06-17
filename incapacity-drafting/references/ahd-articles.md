@@ -17,7 +17,7 @@ unresolved placeholder is a defect.
 |---|---|---|
 | `[CLIENT]` | client.full_legal_name | UPPERCASE plain text everywhere it appears (title, body, signature footer, notary acknowledgement) |
 | `[City]` | client.city | Title case |
-| `[SIGNING COUNTY]` | client county OR the county where signing occurs | Title case |
+| `[SIGNING COUNTY]` | client county OR the county where signing occurs | **UPPERCASE** (e.g., "NORFOLK", "MIDDLESEX") |
 | `[DocDate]` | notary acknowledgement date | e.g., `May 21, 2025`. For unscheduled signings, leave as ` ____________ `. Appears twice (principal notary block AND witness notary block). |
 | `[Notary Commission]` | notary commission expiration date | Leave blank ` ____________ ` — populated by notary at signing. Appears twice. |
 | `[Client Pronoun]` | client subject pronoun | `he` or `she` (lowercase). Appears once in the principal notary acknowledgement (P19): "acknowledged that [Client Pronoun] signed it voluntarily" |
@@ -359,6 +359,9 @@ Same `[DocDate]` and `[Notary Commission]` as the principal notary block.
       `[SIGNING COUNTY]`, `[DocDate]`, `[Notary Commission]`, `[Client
       Pronoun]`, `[Client HisHer]`) — all resolved or, if intentionally
       left blank for signing, replaced with underscored blanks
+- [ ] **`[SIGNING COUNTY]` value is UPPERCASE** (e.g., "NORFOLK",
+      "MIDDLESEX") — applies to both the Principal and Witness notary blocks
+- [ ] **`[CLIENT]` name is UPPERCASE plain text** — no bold on name value
 - [ ] No literal `\n` characters anywhere in the output
 - [ ] `[Client Pronoun]` resolved to "he" or "she" (lowercase) in P19
 - [ ] `[Client HisHer]` resolved to "his" or "her" (lowercase) in all

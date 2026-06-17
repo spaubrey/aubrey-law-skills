@@ -16,7 +16,7 @@ these before emitting. Any unresolved placeholder is a defect.
 | `[CLIENT]` | client.full_legal_name | UPPERCASE plain text everywhere |
 | `[Street Address]` | client.street_address | Title case |
 | `[City]` | client.city | Title case |
-| `[SIGNING COUNTY]` | client county OR the county where signing occurs | Title case |
+| `[SIGNING COUNTY]` | client county OR the county where signing occurs | **UPPERCASE** |
 | `[DocDate]` | notary acknowledgement date | e.g., `May 21, 2025`. For unscheduled signings, leave as ` ____________ `. Appears in both notary blocks. |
 | `[Notary Commission]` | notary commission expiration date | Leave blank — populated at signing. Appears in both notary blocks. |
 | `[client he/she]` | client subject pronoun | lowercase. e.g., `he` or `she`. Appears in principal notary acknowledgement |
@@ -30,7 +30,7 @@ alternates; v2 reduced to one).
 | Placeholder | Source |
 |---|---|
 | `[PRIMARY HCP FULL NAME]` | primary.full_name (UPPERCASE) |
-| `[Primary HCP Relationship]` | primary.relationship (e.g., "Wife", "Son") |
+| `[Primary HCP Relationship]` | primary.relationship (e.g., "Wife", "Son") — **plain text, NOT bold** |
 | `[Primary HCP Full Address]` | primary.address (full single-line) |
 | `[Primary HCP Phone]` | primary.phone |
 
@@ -38,7 +38,7 @@ alternates; v2 reduced to one).
 | Placeholder | Source |
 |---|---|
 | `[ALTERNATE 1 HCP FULL NAME]` | alternate.full_name (UPPERCASE) |
-| `[Alternate 1 HCP Relationship]` | alternate.relationship |
+| `[Alternate 1 HCP Relationship]` | alternate.relationship — **plain text, NOT bold** |
 | `[Alternate 1 HCP Full Address]` | alternate.address |
 | `[Alternate 1 HCP Phone]` | alternate.phone |
 
@@ -126,6 +126,10 @@ Address: [Primary HCP Full Address]
 Telephone:  [Primary HCP Phone]
 ```
 
+> **Formatting note:** `Name:`, `Relationship:`, `Address:`, `Telephone:` labels follow the template's style.
+> The **Relationship value** (e.g., "Wife", "Son") must be **plain text — NOT bold**.
+> The name value `[PRIMARY HCP FULL NAME]` must be **UPPERCASE plain text** (no bold).
+
 **Alternate transition (P8):**
 ```
 If [PRIMARY HCP FULL NAME] not available, willing or competent to serve
@@ -147,6 +151,9 @@ Relationship:  [Alternate 1 HCP Relationship]
 Address: [Alternate 1 HCP Full Address]
 Telephone:  [Alternate 1 HCP Phone]
 ```
+
+> **Formatting note:** The **Relationship value** (e.g., "Daughter", "Friend") must be **plain text — NOT bold**.
+> The name value `[ALTERNATE 1 HCP FULL NAME]` must be **UPPERCASE plain text** (no bold).
 
 ---
 
@@ -397,6 +404,11 @@ content — no trailing preferences section.
       `[Notary Commission]`, `[client he/she]`, all 8 fiduciary
       placeholders) — all resolved or, if intentionally left blank for
       signing, replaced with underscored blanks
+- [ ] **`[SIGNING COUNTY]` value is UPPERCASE** (e.g., "NORFOLK", "MIDDLESEX")
+- [ ] **Relationship values are plain text, NOT bold** — applies to both
+      Primary HCP and Alternate HCP Relationship fields
+- [ ] **All names (CLIENT, PRIMARY HCP FULL NAME, ALTERNATE 1 HCP FULL NAME)
+      are UPPERCASE plain text** — no bold on name values
 - [ ] Section labels use flat bold lead-ins (`HEALTH CARE PROXY.`,
       `APPOINTMENT OF HEALTH CARE AGENT.`, etc.) — NOT letter prefixes
       (A., B., C.) which were v1 style

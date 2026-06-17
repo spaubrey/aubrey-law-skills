@@ -47,8 +47,9 @@ must account for:
 | `[DocDate]` | document execution date | Appears in P18 ("Dated:") and P24 (notary acknowledgement). For unscheduled signings, leave as ` ____________ `. |
 | `[Notary Commission]` | notary commission expiration date | Leave blank — populated at signing. Appears in P29. |
 | `[client he/she]` | client subject pronoun | lowercase: `he` or `she`. Appears in principal notary acknowledgement (P24). |
+| `[SIGNING COUNTY]` | client county OR the county where signing occurs | **UPPERCASE** (e.g., "NORFOLK", "MIDDLESEX"). Appears in notary block (P23). |
 
-That's the complete placeholder set — five total.
+That's the complete placeholder set — six total.
 
 **No conditional macros.** v2 does not use any `[IF_X]` / `[END_IF_X]`
 markers.
@@ -366,9 +367,11 @@ inconsistency). In v2 this paragraph is its own properly-styled line.
 - [ ] Title verbatim: AUTHORIZATION FOR RELEASE OF PROTECTED HEALTH
       INFORMATION
 - [ ] No literal placeholder brackets remain (`[CLIENT]`, `[Client DOB]`,
-      `[DocDate]`, `[Notary Commission]`, `[client he/she]`) — all
-      resolved or, if intentionally left blank for signing, replaced
-      with underscored blanks
+      `[DocDate]`, `[Notary Commission]`, `[client he/she]`,
+      `[SIGNING COUNTY]`) — all resolved or, if intentionally left blank
+      for signing, replaced with underscored blanks
+- [ ] **`[SIGNING COUNTY]` value is UPPERCASE** (e.g., "NORFOLK", "MIDDLESEX")
+- [ ] **`[CLIENT]` name is UPPERCASE plain text** — no bold on name value
 - [ ] No `[SPOUSE FULL NAME]` placeholder — that was v1; v2 has no
       spouse-specific clause
 - [ ] No `[ADDRESS]` placeholder — that was v1; v2 has no client address
@@ -380,7 +383,7 @@ inconsistency). In v2 this paragraph is its own properly-styled line.
       excludes psychotherapy notes by default
 - [ ] Notary county line reads `COUNTY OF [SIGNING COUNTY]` —
       placeholder is resolved at generation time to the actual signing
-      county
+      county (UPPERCASE)
 - [ ] `[client he/she]` resolved to "he" or "she" (lowercase) per
       principal's gender
 - [ ] No witnesses required for HIPAA (notarization only) — verify the

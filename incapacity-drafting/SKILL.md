@@ -25,10 +25,18 @@ Output: fully populated .docx files, one per document per client, saved to
 the project OUTPUTS folder under a matter subfolder, ready for Scott's
 review.
 
-**CRITICAL — Document Generation:**
-All .docx files MUST be generated using `/home/claude/al_generator.py` and the
-clean AL template at `/home/claude/al-template/`. Do NOT use the `docx` skill
-or any other method — fonts, styles, and branding will be wrong.
+**CRITICAL — Template-Based Generation Only:**
+Every output document MUST be produced by merging client data into the
+corresponding .docx template in `references/`. The workflow is:
+
+1. Copy the template .docx to the output location
+2. Unpack it: `python /mnt/skills/public/docx/scripts/office/unpack.py <template> <unpacked_dir>`
+3. Edit `unpacked_dir/word/document.xml` — replace placeholder text in the XML using the str_replace tool
+4. Repack: `python /mnt/skills/public/docx/scripts/office/pack.py <unpacked_dir> <output.docx> --original <template>`
+
+**NEVER create documents from scratch** (no `docx` JS library, no
+`al_generator.py`, no writing XML from scratch). If a template file is
+missing or cannot be found, stop immediately — see Step 0 below.
 
 Also read at start: the `estate-planning` skill for placeholder conventions,
 MA execution blocks, and Scott's standard clause language.
@@ -54,6 +62,36 @@ reference against the .docx template if anything is ambiguous.
 The legacy `dpoa-incapacity-guide.md`, if present in the installed skill
 folder, is superseded by `dpoa-articles.md`. Delete the legacy file once
 this version is in place.
+
+---
+
+## Step 0 — Verify Templates (Do This First, Before Anything Else)
+
+Before collecting any client data, verify that every required template exists
+in the skill's `references/` folder. The five required template files are:
+
+| Template file | Document |
+|---|---|
+| `references/HCP_v1.1.docx` | Health Care Proxy |
+| `references/HCP_Preferences_Worksheet.docx` | HCP Preferences Worksheet |
+| `references/HIPAA_v1.1.docx` | HIPAA Authorization |
+| `references/Living_Will_v1.1.docx` | Advance Directive |
+| `references/DPOA_v1.1.docx` | Durable Power of Attorney |
+
+**Check:** Run `ls <skill_path>/references/*.docx` or use the `view` tool on
+the references directory to confirm all five are present.
+
+**If any template is missing:**
+- Do NOT attempt to draft that document from scratch.
+- Stop and ask Scott: "The template for [Document Name] is missing from
+  the skill's references folder (`references/[filename]`). Please locate
+  and install the template file before I can generate this document.
+  Should I proceed with the other documents, or wait until all templates
+  are available?"
+- Only proceed with documents whose templates ARE present unless Scott
+  explicitly instructs otherwise.
+
+**If ALL templates are present:** Proceed to Step 1.
 
 ---
 
@@ -143,116 +181,118 @@ subfolder named after the matter (e.g., `OUTPUTS/Smith_Jane_and_John/`). If
 
 ---
 
-## Step 3 — Draft the Documents
+## Step 3 — Prepare Client Data for Merge
 
-For each document, read the article guide first, then emit via
-`al_generator.py`.
+Read the article guide for each document being generated:
 
-→ Read `references/formatting-rules.md` FIRST for cross-document
-  formatting conventions: uppercase names, execution-date blanks, notary
-  blocks on new pages, signature footer lines, pronoun handling.
-→ For HCP content → `references/hcp-articles.md`
-→ For HCP Preferences Worksheet → `references/hcp-preferences-worksheet.md`
-→ For HIPAA content → `references/hipaa-articles.md`
-→ For AHD content → `references/ahd-articles.md`
-→ For DPOA content → `references/dpoa-articles.md` (canonical guide for the
-  current DPOA_v1.1.docx template)
+→ `references/hcp-articles.md` — HCP placeholder set, conditional rules, formatting
+→ `references/hcp-preferences-worksheet.md` — Worksheet content and layout
+→ `references/hipaa-articles.md` — HIPAA placeholder set
+→ `references/ahd-articles.md` — AHD placeholder set, pronoun handling
+→ `references/dpoa-articles.md` — DPOA placeholder set and all six conditional macros
 
-The five templates in `references/` are the verbatim source of truth —
-read them directly if any article guide is ambiguous about formatting.
-Current versions: DPOA_v1.1.docx, HCP_v1.1.docx, HIPAA_v1.1.docx,
-Living_Will_v1.1.docx, HCP_Preferences_Worksheet.docx. All four primary
-documents are on parallel v1.1 versioning.
+Build a complete placeholder resolution table from client data before
+touching any template. For each document, list every placeholder and its
+resolved value (or the underscore blank for signing-day fields). If any
+required value is unresolvable, flag it in DRAFTING NOTES — do not halt.
 
-Key defaults (all overridable by design sheet or Scott's instruction):
-- **HCP:** MGL c. 201D; witnesses may NOT be the agent or alternate; notary
-  required for both principal and witnesses (two notary blocks). v1.1
-  template state: only ONE alternate HCP slot; Anatomical Gift Election
-  is hardcoded ON ("any needed organs, tissues or parts for any
-  purpose") — no client.anatomical_gift field used; flat bold lead-ins
-  for section headings (no letter prefixes); embedded HEALTHCARE
-  PREFERENCES section removed (preferences worksheet is delivered as a
-  separate document).
-- **HCP Preferences Worksheet:** client-facing discussion guide; not legally
-  binding; no witnesses, no notary; single client signature; eleven topic
-  tables with empty `*My notes:*` rows; date left blank for client.
-- **HIPAA:** 45 CFR §§ 160–164; broad scope; Authorized Persons = HCP
-  chain (primary + alternate) + DPOA chain (primary + successors) +
-  trustees of any trust where client is a beneficiary or trustee. v1.1
-  template state: spouse clause REMOVED (no separate `[SPOUSE FULL NAME]`
-  placeholder, no `[IF_MARRIED]` logic); client address REMOVED (no
-  `[ADDRESS]` placeholder); psychotherapy notes election REMOVED (no
-  opt-in/opt-out lines — psychotherapy notes excluded by default); notary
-  county uses `[SIGNING COUNTY]` placeholder (works for any signing
-  location). No expiration beyond two years post-death; notary required
-  (no witnesses).
-- **AHD:** three triggering conditions (terminal / persistent vegetative
-  state / end-stage); comfort care + statement of values combined into one
-  paragraph; HCP empowerment clause; witnesses + notary; tighten witness
-  signature table per `formatting-rules.md` §4. Placeholders use DPOA
-  naming convention (`[CLIENT]`, `[City]`, `[SIGNING COUNTY]`,
-  `[DocDate]`, `[Notary Commission]`). Pronoun handling: `[Client
-  Pronoun]` for the subject pronoun in the principal notary acknowledgement
-  (P19), `[Client HisHer]` for possessive pronouns in the witness
-  affirmations clause (P28).
-- **DPOA:** MGL c. 190B § 5-501 (durability); MGL c. 190B Art. V-A (digital
-  assets); immediately effective (no springing trigger); separate authority
-  the default when co-agents are named; gifting hardcoded OFF in template
-  (no override); digital assets ON; single notary block (witnesses sign
-  inline). All six conditional macros (`[IF_SOLO_AGENT]`, `[IF_CO_AGENT]`,
-  `[IF_JOINT]`, `[IF_SEPARATE]`, `[IF_MARRIED]`, `[IF_AIF_IS_MARRIED]`) must
-  be resolved at generation time — never emit the macro tags. Successor
-  names inserted as a numbered list after the successor opening sentence.
+**DPOA conditional macros:** Resolve all six macros
+(`[IF_SOLO_AGENT]`, `[IF_CO_AGENT]`, `[IF_JOINT]`, `[IF_SEPARATE]`,
+`[IF_MARRIED]`, `[IF_AIF_IS_MARRIED]`) before opening any XML. Determine
+exactly which content blocks to include and which to omit.
+
+Key document defaults (see article guides for full detail):
+- **HCP:** Two notary blocks; anatomical gift hardcoded ON; one alternate HCP slot.
+- **HCP Preferences Worksheet:** No witnesses, no notary; eleven topic tables.
+- **HIPAA:** Notary only (no witnesses); no spouse clause; no address field.
+- **AHD:** Two witnesses + notary; three triggering conditions; two notary blocks.
+- **DPOA:** Single notary block; witnesses sign inline; six conditional macros must be resolved.
 
 **Cross-document rules that apply to ALL documents:**
-- Names (Principal and fiduciaries) in body text: **UPPERCASE plain text**.
-  Drop the bolded-placeholder formatting shown in the templates and article
-  guides — that bolding is visual placeholder highlighting only, not a
-  production cue.
-- Signature footer line: Principal's full legal name in UPPERCASE under
-  every signature line.
-- Unscheduled signing: use `____ day of ___________` / ` ________________` /
-  `________________` for ordinal date / execution date / notary commission.
-- Notary blocks: insert a page break so each notary block starts on a
-  new page.
+- **Names** (Principal and fiduciaries): **UPPERCASE plain text** — strip any bold from name runs.
+- **SIGNING COUNTY**: **UPPERCASE** (e.g., "NORFOLK", "MIDDLESEX") in all notary blocks.
+- **HCP Relationship fields**: **plain text, NOT bold**.
+- **DPOA**: title and lead-in labels are bold; body prose following each lead-in is **NOT bold**.
+- **All placeholders must be resolved**: no `[BRACKET]` tags in output; signing-day blanks use underscore strings.
+- Signature footer: Principal's full legal name UPPERCASE under every signature line.
 
-For married matters, draft the Client's full set first, then the Spouse's
-full set. Do NOT co-mingle fiduciaries between spouses unless both clients
-named the same person intentionally (flag for Scott's confirmation).
+For married matters, prepare data for Client first, then Spouse. Do NOT
+co-mingle fiduciaries between spouses unless intentional (flag for Scott).
 
 ---
 
-## Step 4 — Generate .docx Files
+## Step 4 — Generate .docx Files from Templates
 
-Use `/home/claude/al_generator.py` with `/home/claude/al-template/`. Call
-`reset_article_counter()` at the start of each document where article
-numbering applies.
+For each document, follow this exact sequence. **NEVER create documents from
+scratch. Always start from the template .docx file in `references/`.**
 
-Note on article heading formats — these differ by document:
-- **AHD:** flat prose with no article headings (v2 change — v1's
-  `ARTICLE 1.  DIRECTIVE` format is gone). Sections flow without explicit
-  labels; the structure is logical only. Preserve the template's
-  paragraph order and the "[Remainder of page intentionally left blank]"
-  layout marker.
-- **HCP:** flat bold lead-ins, NO letter-prefix section headings. v1's
-  `A. HEALTH CARE PROXY`, `B. APPOINTMENT...`, `C. POWERS...` labels were
-  removed in v2 — section labels are now plain bold (`HEALTH CARE PROXY.`,
-  `APPOINTMENT OF HEALTH CARE AGENT.`, etc.).
-- **HIPAA:** flat bold lead-ins, NO numbered section labels. v1's `1.`,
-  `2.`, `3.` numbered paragraphs were removed in v2 — section labels are
-  now plain bold (`Identity of Person or Class of Persons Authorized to
-  Make Disclosure.`, `Description of Information to Be Disclosed.`,
-  etc.).
-- **Worksheet:** flat structure with topic tables — no articles or sections.
-- **DPOA:** no ARTICLE-style headings. All powers and structural sections
-  are flat `TR_Art2` paragraphs with bolded lead-in labels — sentence case
-  for the enumerated powers (`Banking Powers.`, `Tax Powers.`), ALL CAPS
-  for the structural sections (`HEALTH CARE DECISIONS AND FUNERAL PLANS.`,
-  `THIRD PARTY RELIANCE.`). Style names use underscores (`TR_Art2`,
-  `TR_Body1`) rather than the trust's hyphenated names.
+### 4a — Copy template to a working temp location
 
-Write output files directly to the OUTPUTS subfolder using the naming
-convention in Step 2.
+```bash
+cp <skill_path>/references/<TemplateFile>.docx /tmp/<ClientName>_<DocTitle>_work.docx
+```
+
+Template-to-document mapping:
+| Template | Document |
+|---|---|
+| `references/HCP_v1.1.docx` | Health Care Proxy |
+| `references/HCP_Preferences_Worksheet.docx` | HCP Preferences Worksheet |
+| `references/HIPAA_v1.1.docx` | HIPAA Authorization |
+| `references/Living_Will_v1.1.docx` | Advance Directive |
+| `references/DPOA_v1.1.docx` | Durable Power of Attorney |
+
+### 4b — Unpack the working copy
+
+```bash
+python /mnt/skills/public/docx/scripts/office/unpack.py \
+  /tmp/<ClientName>_<DocTitle>_work.docx \
+  /tmp/<ClientName>_<DocTitle>_unpacked/
+```
+
+### 4c — Inspect document.xml to locate placeholders
+
+Use the `view` tool on `unpacked/word/document.xml`. Identify the exact XML
+representation of each placeholder — they may be split across multiple
+`<w:r>` runs. Do not guess at the XML structure; always inspect first.
+
+For DPOA: locate the full XML span of each `[IF_X — ...]...[END_IF_X]`
+conditional block. Remove unwanted blocks entirely from the XML; strip only
+the macro tag text from blocks that are kept. Never leave literal macro tags
+in the output.
+
+### 4d — Substitute placeholders using str_replace
+
+Use the `str_replace` tool directly on
+`/tmp/<ClientName>_<DocTitle>_unpacked/word/document.xml`.
+Make one replacement per call. Replace each placeholder (or its split-run
+XML) with the resolved client value.
+
+Bold handling:
+- Names → UPPERCASE, remove `<w:b/>` from the run's `<w:rPr>` if present
+- SIGNING COUNTY → UPPERCASE, no bold
+- HCP Relationship values → plain text, remove `<w:b/>` if present
+- DPOA body prose → remove `<w:b/>` from prose runs (keep it only on lead-in label runs)
+
+### 4e — Repack to final output path
+
+```bash
+python /mnt/skills/public/docx/scripts/office/pack.py \
+  /tmp/<ClientName>_<DocTitle>_unpacked/ \
+  <OUTPUTS_DIR>/<ClientName>_<DocTitle>.docx \
+  --original /tmp/<ClientName>_<DocTitle>_work.docx
+```
+
+If pack fails validation, read the error, fix the XML in the unpacked
+directory, and repack. Do not deliver a document that fails packing.
+
+### 4f — Clean up temp files
+
+```bash
+rm -rf /tmp/<ClientName>_<DocTitle>_work.docx /tmp/<ClientName>_<DocTitle>_unpacked/
+```
+
+Repeat 4a–4f for each document in the set. For married matters, complete all
+five documents for the Client before starting the Spouse's set.
 
 ---
 
@@ -267,6 +307,21 @@ naming, client-data consistency, fiduciary chain, statutory citations,
 execution blocks, document-specific defaults, AND the cross-document
 formatting rules from `formatting-rules.md` (uppercase names, footer line,
 notary page breaks, execution-date blanks, pronoun grammar).
+
+**Key formatting checks to run on every document:**
+1. **All names UPPERCASE** — CLIENT and all fiduciary names (HCP agents,
+   DPOA agents, HIPAA recipients) appear in UPPERCASE plain text. No bold
+   on name values.
+2. **SIGNING COUNTY UPPERCASE** — in all notary blocks across all five
+   documents.
+3. **HCP Relationship fields plain text** — `[Primary HCP Relationship]`
+   and `[Alternate 1 HCP Relationship]` values are NOT bold.
+4. **DPOA body text not bold** — section lead-in labels (`Banking Powers.`,
+   `THIRD PARTY RELIANCE.`, etc.) are bold; the prose that follows is plain.
+   The title is bold.
+5. **No unresolved placeholders** — scan every document for any remaining
+   `[BRACKET]` tags. Replace signing-day blanks with underscored blanks;
+   flag anything else in DRAFTING NOTES.
 
 For DPOA specifically, the most common failure modes are:
 1. Leaving literal `[IF_*]` or `[END_IF_*]` macro tags in the output

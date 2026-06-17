@@ -20,7 +20,7 @@ before emitting. Any unresolved placeholder is a defect.
 | `[SPOUSE]` | spouse.full_legal_name | UPPERCASE plain text; only used inside `[IF_MARRIED]` blocks |
 | `[Spouse HisHer]` | spouse pronoun (his/her) | lowercase; possessive; only used inside `[IF_MARRIED]` blocks |
 | `[Client Pronoun]` | client pronoun (he/she) | lowercase; used in notary acknowledgement |
-| `[SIGNING COUNTY]` | client county OR the county where signing occurs | Title case |
+| `[SIGNING COUNTY]` | client county OR the county where signing occurs | **UPPERCASE** (e.g., "NORFOLK", "MIDDLESEX") |
 | `[Ordinal_DocDate]` | execution date as ordinal phrase | e.g., `21st day of May, 2025`. For unscheduled signings, leave as ` _____ day of ____________, _______ ` |
 | `[DocDate]` | notary acknowledgement date | e.g., `May 21, 2025`. For unscheduled signings, leave as ` ____________ ` |
 | `[Notary Commission]` | notary commission expiration date | Leave blank ` ____________ ` — populated by notary at signing |
@@ -71,6 +71,12 @@ a successor block with empty placeholder names.
 - **Style names use underscores** (`TR_Body1`, `TR_Art2`, etc.) — note this
   differs from the trust's hyphenated style names. Confirm al_generator.py
   helpers map to the correct underscored style.
+- **Title is bold; body paragraph text is NOT bold** — the DPOA title
+  (`DURABLE POWER OF ATTORNEY OF [CLIENT]`) uses bold formatting. Section
+  lead-in labels (e.g., `Banking Powers.`, `THIRD PARTY RELIANCE.`) are
+  bold. The body text that follows each lead-in — the substantive prose —
+  must be **plain text (not bold)**. Do not carry bold formatting from the
+  template's placeholder highlight styling into the merged output.
 - **All powers under one Article:** The template does NOT use the trust's
   ARTICLE ONE / ARTICLE TWO heading structure. All powers and structural
   sections are flat `TR_Art2` paragraphs (Section X.0Y auto-numbered), with
@@ -79,6 +85,7 @@ a successor block with empty placeholder names.
     (`Powers of Collection and Payment.`, `Power to Acquire and Sell.`).
   - Bolded lead-in labels for the structural sections use ALL CAPS
     (`HEALTH CARE DECISIONS AND FUNERAL PLANS.`, `THIRD PARTY RELIANCE.`).
+  - The **body text following each lead-in is NOT bold**.
   - Preserve this distinction when emitting.
 - **Single notary block:** DPOA has only one notary block (for the
   Principal). There is NO separate witness notary block. Witnesses sign
@@ -465,6 +472,12 @@ For unscheduled signings, `[DocDate]` resolves to ` ____________ ` and
 ## QUALITY CHECKLIST (DPOA-specific)
 
 - [ ] Title verbatim: DURABLE POWER OF ATTORNEY OF [CLIENT name in UPPERCASE]
+- [ ] **Title is bold; body paragraph text following each section lead-in is
+      NOT bold** — lead-in labels (e.g., `Banking Powers.`,
+      `THIRD PARTY RELIANCE.`) are bold; the prose that follows is plain text
+- [ ] **`[SIGNING COUNTY]` value is UPPERCASE** (e.g., "NORFOLK", "MIDDLESEX")
+- [ ] **`[CLIENT]` name is UPPERCASE plain text** throughout body and
+      signature footer — no bold on the name value itself
 - [ ] `[IF_SOLO_AGENT]` vs `[IF_CO_AGENT]` correctly emitted; the OTHER variant
       omitted (NOT left in the body as a comment or stub)
 - [ ] No literal `[IF_*]` or `[END_IF_*]` macro tags remain in the output
