@@ -146,6 +146,13 @@ quality checklist will flag if more than one alternate is collected.
 - `dpoa.initial_agent.is_married` — boolean; if true, triggers
   `[IF_AIF_IS_MARRIED]` block in the Self-Dealing section
 
+**Worksheet placeholder names differ from all other documents:**
+The HCP Preferences Worksheet uses `[CLIENT FULL NAME]` (not `[CLIENT]`) and
+`[DATE]` (not `[DocDate]`). Both must be resolved at generation time:
+- `[CLIENT FULL NAME]` → client's full legal name in UPPERCASE
+- `[DATE]` → leave blank (`____________`) — client fills in at the time of
+  conversation; do not pre-populate with today's date
+
 **Prompt style:** If a design sheet is provided, extract silently and ask
 ONLY about missing required fields. If no design sheet, use AskUserQuestion
 in one or two batches (≤7 questions per batch).
@@ -204,6 +211,9 @@ exactly which content blocks to include and which to omit.
 Key document defaults (see article guides for full detail):
 - **HCP:** Two notary blocks; anatomical gift hardcoded ON; one alternate HCP slot.
 - **HCP Preferences Worksheet:** No witnesses, no notary; eleven topic tables.
+  Uses different placeholder names than all other documents:
+  `[CLIENT FULL NAME]` (not `[CLIENT]`) and `[DATE]` (not `[DocDate]`).
+  `[DATE]` is left blank — do not pre-fill.
 - **HIPAA:** Notary only (no witnesses); no spouse clause; no address field.
 - **AHD:** Two witnesses + notary; three triggering conditions; two notary blocks.
 - **DPOA:** Single notary block; witnesses sign inline; eight conditional macros must be resolved (`[IF_SOLO_AGENT]`, `[IF_CO_AGENT]`, `[IF_JOINT]`, `[IF_SEPARATE]`, `[IF_ONE_SUCCESSOR]`, `[IF_MULTI_SUCCESSOR]`, `[IF_MARRIED]`, `[IF_AIF_IS_MARRIED]`).
@@ -351,13 +361,16 @@ left as literal bracket tags.
 | HCP | `[DocDate]` | Both notary blocks (principal + witness) |
 | HIPAA | `[DocDate]` | Dated line + notary block |
 | AHD | `[DocDate]` | Both notary blocks (principal + witness) |
+| Worksheet | `[DATE]` | Signature block — **always leave blank** for client |
 
 **Rule:** If signing date is known → substitute it. If unscheduled →
 replace with the correct blank form:
 - `[Ordinal_DocDate]` → `_____ day of _____________, _______`
 - `[DocDate]` → `____________`
+- `[DATE]` (Worksheet only) → `____________` — always blank regardless of
+  whether a signing date is known; the client fills this in themselves
 
-A literal `[DocDate]` or `[Ordinal_DocDate]` remaining in output is a defect.
+A literal `[DocDate]`, `[Ordinal_DocDate]`, or `[DATE]` remaining in output is a defect.
 
 ---
 
@@ -400,6 +413,9 @@ execution-date blanks, pronoun grammar).
 3. **DPOA body prose not bold** — lead-in labels bold; following prose plain.
 4. **No unresolved placeholders anywhere** — scan both `document.xml` AND
    `footer1.xml`. Any `[BRACKET]` tag in either file is a defect.
+5. **Worksheet uses different placeholder names** — verify `[CLIENT FULL NAME]`
+   and `[DATE]` are resolved; do not scan for `[CLIENT]` or `[DocDate]` in
+   the Worksheet (those names don't exist there).
 
 For DPOA specifically, the most common failure modes are:
 1. Leaving literal `[IF_*]` or `[END_IF_*]` macro tags in the output

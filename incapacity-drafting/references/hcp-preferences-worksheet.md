@@ -167,6 +167,16 @@ UPPERCASE name on the signature label line. `[DATE]` left blank.
 
 ## QUALITY CHECKLIST (Worksheet-specific)
 
+**Run the three-item pre-delivery scan from SKILL.md Step 5a–5c first:**
+- [ ] **Footer** — Worksheet has no footer; skip this check.
+- [ ] **Date placeholder** — `[DATE]` resolved to `____________` (blank);
+      no literal `[DATE]` tag remains. Note: this document uses `[DATE]`,
+      NOT `[DocDate]` — they are different placeholder names.
+- [ ] **Signing county** — Worksheet has no notary block; skip this check.
+
+**Then run the full checklist:**
+- [ ] `[CLIENT FULL NAME]` resolved to client's full legal name in UPPERCASE
+      (note: this document uses `[CLIENT FULL NAME]`, NOT `[CLIENT]`)
 - [ ] Title and subtitle present
 - [ ] Preamble paragraphs verbatim (including the not-legally-binding disclaimer)
 - [ ] All eleven topic tables in order with framing text verbatim
