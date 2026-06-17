@@ -18,7 +18,8 @@ unresolved placeholder is a defect.
 | `[CLIENT]` | client.full_legal_name | UPPERCASE plain text everywhere it appears (title, body, signature footer, notary acknowledgement) |
 | `[City]` | client.city | Title case |
 | `[SIGNING COUNTY]` | client county OR the county where signing occurs | **UPPERCASE** (e.g., "NORFOLK", "MIDDLESEX") |
-| `[DocDate]` | notary acknowledgement date | e.g., `May 21, 2025`. For unscheduled signings, leave as ` ____________ `. Appears twice (principal notary block AND witness notary block). |
+| `[Ordinal_DocDate]` | execution date (ordinal form) | e.g., `21st day of May, 2025`. For unscheduled signings, leave as `_____ day of _________________, 20___`. Appears in the IN WITNESS WHEREOF execution line only. |
+| `[DocDate]` | notary acknowledgement date | e.g., `May 21, 2025`. For unscheduled signings, leave as `________________, 20__`. Appears in both notary blocks (principal + witness). |
 | `[Notary Commission]` | notary commission expiration date | Leave blank ` ____________ ` — populated by notary at signing. Appears twice. |
 | `[Client Pronoun]` | client subject pronoun | `he` or `she` (lowercase). Appears once in the principal notary acknowledgement (P19): "acknowledged that [Client Pronoun] signed it voluntarily" |
 | `[Client HisHer]` | client possessive pronoun | `his` or `her` (lowercase). Appears four times in the witness affirmations clause (P28): "at [Client HisHer] request," "in [Client HisHer] presence," "for or at [Client HisHer] direction," "upon [Client HisHer] death" |
@@ -249,7 +250,7 @@ The "personally appeared" / "[CLIENT]" line break is a paragraph break
 for "Notary Public" and "My Commission Expires:" which are now separate
 paragraphs (P24 and P25).
 
-For unscheduled signings, `[DocDate]` resolves to ` ____________ ` and
+For unscheduled signings, `[DocDate]` resolves to `________________, 20__` and
 `[Notary Commission]` stays blank.
 
 ---
@@ -355,8 +356,13 @@ Same `[DocDate]` and `[Notary Commission]` as the principal notary block.
 **Run the three-item pre-delivery scan from SKILL.md Step 5a–5c first:**
 - [ ] **Footer** — `footer1.xml` reads `ADVANCE DIRECTIVE OF [CLIENT NAME IN CAPS]`
       with `[CLIENT]` resolved. Inspect `footer1.xml` directly — not covered by body scan.
-- [ ] **Document date** — `[DocDate]` resolved or replaced with `____________` in
-      BOTH notary blocks (principal + witness); no literal bracket tag remains.
+- [ ] **Execution line date** — `[Ordinal_DocDate]` resolved to ordinal form
+      (e.g., "21st day of May, 2025") or replaced with
+      `_____ day of _________________, 20___` for unscheduled signings;
+      no literal bracket tag or hardcoded blanks remain.
+- [ ] **Notary block dates** — `[DocDate]` resolved or replaced with
+      `____________` in both notary blocks (principal + witness); no literal
+      bracket tag remains.
 - [ ] **Signing county** — `[SIGNING COUNTY]` resolved to UPPERCASE county name in
       BOTH notary blocks (principal + witness); no literal bracket tag remains.
 
@@ -384,8 +390,9 @@ Same `[DocDate]` and `[Notary Commission]` as the principal notary block.
 - [ ] HCP empowerment clause present (P8)
 - [ ] "[Remainder of page intentionally left blank]" marker preserved
       (P10)
-- [ ] Execution clause uses `____ day of ________, 20__` blanks (NOT
-      the v1 `[MONTH]`/`[YEAR]` placeholders)
+- [ ] Execution clause uses `[Ordinal_DocDate]` placeholder (resolved to ordinal
+      form e.g. "21st day of May, 2025", or `_____ day of _________________, 20___`
+      for unscheduled signings) — NOT hardcoded blanks and NOT `[DocDate]`
 - [ ] Both notary blocks present and complete (Principal at P16–P25,
       Witnesses at P31–P38)
 - [ ] Witness affirmations clause (P28) is a single paragraph containing

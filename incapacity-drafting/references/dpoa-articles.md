@@ -21,7 +21,7 @@ before emitting. Any unresolved placeholder is a defect.
 | `[Spouse HisHer]` | spouse pronoun (his/her) | lowercase; possessive; only used inside `[IF_MARRIED]` blocks |
 | `[Client Pronoun]` | client pronoun (he/she) | lowercase; used in notary acknowledgement |
 | `[SIGNING COUNTY]` | client county OR the county where signing occurs | **UPPERCASE** (e.g., "NORFOLK", "MIDDLESEX") |
-| `[Ordinal_DocDate]` | execution date as ordinal phrase | e.g., `21st day of May, 2025`. For unscheduled signings, leave as ` _____ day of ____________, _______ ` |
+| `[Ordinal_DocDate]` | execution date as ordinal phrase | e.g., `21st day of May, 2025`. For unscheduled signings, leave as ` _____ day of _________________, 20___ ` |
 | `[DocDate]` | notary acknowledgement date | e.g., `May 21, 2025`. For unscheduled signings, leave as ` ____________ ` |
 | `[Notary Commission]` | notary commission expiration date | Leave blank ` ____________ ` — populated by notary at signing |
 
@@ -466,7 +466,7 @@ ______________________________________
 ```
 
 For unscheduled signings, `[Ordinal_DocDate]` resolves to
-` _____ day of ____________, _______ `.
+` _____ day of _________________, 20___ `.
 
 ---
 
@@ -512,7 +512,7 @@ WITNESS my hand and notarial seal.
                                             My Commission Expires: [Notary Commission]
 ```
 
-For unscheduled signings, `[DocDate]` resolves to ` ____________ ` and
+For unscheduled signings, `[DocDate]` resolves to `________________, 20__` and
 `[Notary Commission]` stays blank.
 
 ---

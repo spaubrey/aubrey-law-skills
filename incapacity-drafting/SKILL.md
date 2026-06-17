@@ -281,7 +281,7 @@ of joint/separate does not apply.
 
 Never leave literal macro tags in the output.
 
-### 4d — Substitute placeholders using str_replace
+### 4d — Substitute placeholders in document.xml
 
 Use the `str_replace` tool directly on
 `/tmp/<ClientName>_<DocTitle>_unpacked/word/document.xml`.
@@ -293,6 +293,33 @@ Bold handling:
 - SIGNING COUNTY → UPPERCASE, no bold
 - HCP Relationship values → plain text, remove `<w:b/>` if present
 - DPOA body prose → remove `<w:b/>` from prose runs (keep it only on lead-in label runs)
+
+### 4d-footer — Substitute placeholders in footer1.xml (separate required step)
+
+**This is not optional and not covered by the document.xml edits above.**
+The footer is a completely separate XML file. Editing `document.xml` does
+not touch the footer.
+
+Three documents have a `[CLIENT]` placeholder in their footer:
+
+| Document | Footer file | Placeholder |
+|---|---|---|
+| DPOA | `word/footer1.xml` | `[CLIENT]` — split across 3 runs: `[`, `CLIENT`, `]` |
+| HCP | `word/footer1.xml` | `[CLIENT]` — may be merged into one run after unpack |
+| AHD | `word/footer1.xml` | `[CLIENT]` — may be merged into one run after unpack |
+| HIPAA | `word/footer1.xml` | Static text only — no placeholder, no edit needed |
+| Worksheet | No footer file | Skip |
+
+**Procedure — always inspect before substituting:**
+
+1. View `unpacked/word/footer1.xml` to see the exact run structure of `[CLIENT]`
+2. If split across runs (e.g., three runs: `[` / `CLIENT` / `]`):
+   - Replace the run containing `CLIENT` with the client's full name in UPPERCASE
+   - Replace the runs containing `[` and `]` with empty strings
+3. If already merged into one run containing `[CLIENT]`:
+   - Replace `[CLIENT]` with the client's full name in UPPERCASE directly
+
+Do not assume the run structure — inspect the footer XML every time before editing.
 
 ### 4e — Repack to final output path
 
@@ -356,17 +383,21 @@ left as literal bracket tags.
 
 | Document | Placeholder(s) | Location |
 |---|---|---|
-| DPOA | `[Ordinal_DocDate]` (e.g., "21st day of May, 2025") | Execution block |
-| DPOA | `[DocDate]` (e.g., "May 21, 2025") | Notary block |
+| DPOA | `[Ordinal_DocDate]` | Execution block |
+| DPOA | `[DocDate]` | Notary block |
+| HCP | `[Ordinal_DocDate]` | Principal signing line |
 | HCP | `[DocDate]` | Both notary blocks (principal + witness) |
 | HIPAA | `[DocDate]` | Dated line + notary block |
+| AHD | `[Ordinal_DocDate]` | IN WITNESS WHEREOF execution line |
 | AHD | `[DocDate]` | Both notary blocks (principal + witness) |
 | Worksheet | `[DATE]` | Signature block — **always leave blank** for client |
 
 **Rule:** If signing date is known → substitute it. If unscheduled →
 replace with the correct blank form:
-- `[Ordinal_DocDate]` → `_____ day of _____________, _______`
-- `[DocDate]` → `____________`
+- `[Ordinal_DocDate]` → `_____ day of _________________, 20___`
+  Used for: DPOA execution block, HCP principal signing line, AHD execution line
+- `[DocDate]` → `________________, 20__`
+  Used for: all notary blocks across all documents + HIPAA dated line
 - `[DATE]` (Worksheet only) → `____________` — always blank regardless of
   whether a signing date is known; the client fills this in themselves
 

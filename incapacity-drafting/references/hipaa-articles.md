@@ -44,7 +44,7 @@ must account for:
 |---|---|---|
 | `[CLIENT]` | client.full_legal_name | UPPERCASE plain text. Appears in title block (P1, P4, P20) and notary block (P24). |
 | `[Client DOB]` | client.date_of_birth | e.g., `January 15, 1962`. Appears only in the identification block (P5). |
-| `[DocDate]` | document execution date | Appears in P18 ("Dated:") and P24 (notary acknowledgement). For unscheduled signings, leave as ` ____________ `. |
+| `[DocDate]` | document execution date | Appears in P18 ("Dated:") and P24 (notary acknowledgement). For unscheduled signings, leave as `________________, 20__`. |
 | `[Notary Commission]` | notary commission expiration date | Leave blank — populated at signing. Appears in P29. |
 | `[client he/she]` | client subject pronoun | lowercase: `he` or `she`. Appears in principal notary acknowledgement (P24). |
 | `[SIGNING COUNTY]` | client county OR the county where signing occurs | **UPPERCASE** (e.g., "NORFOLK", "MIDDLESEX"). Appears in notary block (P23). |
@@ -368,7 +368,7 @@ inconsistency). In v2 this paragraph is its own properly-styled line.
 - [ ] **Footer** — HIPAA footer is static text only (`AUTHORIZATION FOR RELEASE OF
       PROTECTED HEALTH INFORMATION`); no `[CLIENT]` placeholder. Confirm footer
       text is intact but no substitution needed.
-- [ ] **Document date** — `[DocDate]` resolved or replaced with `____________` in
+- [ ] **Document date** — `[DocDate]` resolved or replaced with `________________, 20__` in
       the Dated line (P18) AND the notary block (P24); no literal bracket tag remains.
 - [ ] **Signing county** — `[SIGNING COUNTY]` resolved to UPPERCASE county name in
       the notary block; no literal bracket tag remains.

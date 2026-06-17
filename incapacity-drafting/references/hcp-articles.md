@@ -17,7 +17,8 @@ these before emitting. Any unresolved placeholder is a defect.
 | `[Street Address]` | client.street_address | Title case |
 | `[City]` | client.city | Title case |
 | `[SIGNING COUNTY]` | client county OR the county where signing occurs | **UPPERCASE** |
-| `[DocDate]` | notary acknowledgement date | e.g., `May 21, 2025`. For unscheduled signings, leave as ` ____________ `. Appears in both notary blocks. |
+| `[Ordinal_DocDate]` | principal signing date (ordinal form) | e.g., `21st day of May, 2025`. For unscheduled signings, leave as `_____ day of _________________, 20___`. Appears on the principal signing line only. |
+| `[DocDate]` | notary acknowledgement date | e.g., `May 21, 2025`. For unscheduled signings, leave as `________________, 20__`. Appears in both notary blocks (principal + witness). |
 | `[Notary Commission]` | notary commission expiration date | Leave blank — populated at signing. Appears in both notary blocks. |
 | `[client he/she]` | client subject pronoun | lowercase. e.g., `he` or `she`. Appears in principal notary acknowledgement |
 
@@ -301,7 +302,7 @@ intention that this instrument be honored in all jurisdictions.
 ```
 SIGNATURE OF PRINCIPAL
 
-I sign this Health Care Proxy on this ____ day of __________, 20___,
+I sign this Health Care Proxy on this [Ordinal_DocDate],
 in the presence of two witnesses, neither of whom is my Health Care
 Agent or Alternate Health Care Agent.
 
@@ -310,7 +311,9 @@ __________________________________
 [CLIENT], Principal
 ```
 
-Manual blanks for execution date (no placeholder substitution needed).
+`[Ordinal_DocDate]` — ordinal long form, e.g. "21st day of May, 2025".
+For unscheduled signings resolve to `_____ day of _________________, 20___`.
+The notary blocks use `[DocDate]` (short form); the signing line uses `[Ordinal_DocDate]`.
 
 ---
 
@@ -340,7 +343,7 @@ Notary block uses TR_ styles correctly. The line break between
 "personally appeared" and "[CLIENT]" is a proper soft line break
 (`<w:br/>`), NOT a literal `\n` defect — preserve as-is.
 
-For unscheduled signings, `[DocDate]` resolves to ` ____________ ` and
+For unscheduled signings, `[DocDate]` resolves to `________________, 20__` and
 `[Notary Commission]` stays blank.
 
 ---
@@ -400,8 +403,13 @@ content — no trailing preferences section.
 **Run the three-item pre-delivery scan from SKILL.md Step 5a–5c first:**
 - [ ] **Footer** — `footer1.xml` reads `MASSACHUSETTS HEALTH CARE PROXY OF [CLIENT NAME IN CAPS]`
       with `[CLIENT]` resolved. Inspect `footer1.xml` directly — not covered by body scan.
-- [ ] **Document date** — `[DocDate]` resolved or replaced with `____________` in
-      BOTH notary blocks (principal + witness); no literal bracket tag remains.
+- [ ] **Signing line date** — `[Ordinal_DocDate]` resolved to ordinal form
+      (e.g., "21st day of May, 2025") or replaced with
+      `_____ day of _________________, 20___` for unscheduled signings;
+      no literal bracket tag or hardcoded blanks remain.
+- [ ] **Notary block dates** — `[DocDate]` resolved or replaced with
+      `____________` in both notary blocks (principal + witness); no literal
+      bracket tag remains.
 - [ ] **Signing county** — `[SIGNING COUNTY]` resolved to UPPERCASE county name in
       BOTH notary blocks (principal + witness); no literal bracket tag remains.
 
